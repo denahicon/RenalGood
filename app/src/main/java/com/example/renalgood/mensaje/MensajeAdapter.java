@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -26,7 +27,7 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemViewType(int position) {
         Mensaje mensaje = mensajes.get(position);
-        return mensaje.getEmisorId().equals(idUsuarioActual) ? TIPO_ENVIADO : TIPO_RECIBIDO;
+        return mensaje.getSenderId().equals(idUsuarioActual) ? TIPO_ENVIADO : TIPO_RECIBIDO;
     }
 
     @NonNull
@@ -68,10 +69,10 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(Mensaje mensaje) {
-            textoMensaje.setText(mensaje.getMensaje());
-            if (mensaje.getTimestamp() != null) {
+            textoMensaje.setText(mensaje.getMessage());
+            if (mensaje.getTimestamp() != 0) {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                textoHora.setText(sdf.format(mensaje.getTimestamp()));
+                textoHora.setText(sdf.format(new Date(mensaje.getTimestamp())));
             }
         }
     }
@@ -86,10 +87,10 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(Mensaje mensaje) {
-            textoMensaje.setText(mensaje.getMensaje());
-            if (mensaje.getTimestamp() != null) {
+            textoMensaje.setText(mensaje.getMessage());
+            if (mensaje.getTimestamp() != 0) {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                textoHora.setText(sdf.format(mensaje.getTimestamp()));
+                textoHora.setText(sdf.format(new Date(mensaje.getTimestamp())));
             }
         }
     }

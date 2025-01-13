@@ -1,25 +1,40 @@
 package com.example.renalgood.mensaje;
 
-import java.util.Date;
+class Mensaje {
+    private String message;
+    private boolean read;
+    private String senderId;
+    private long timestamp;
 
-public class Mensaje{
-    private String mensajeId;
-    private String emisorId;
-    private String mensaje;
-    private Date timestamp;
-
-    public Mensaje() {}
-
-    public Mensaje(String mensajeId, String emisorId, String mensaje, Date timestamp) {
-        this.mensajeId = mensajeId;
-        this.emisorId = emisorId;
-        this.mensaje = mensaje;
-        this.timestamp = timestamp;
+    public String getMessage() {
+        return message;
     }
 
-    // Getters
-    public String getMensajeId() { return mensajeId; }
-    public String getEmisorId() { return emisorId; }
-    public String getMensaje() { return mensaje; }
-    public Date getTimestamp() { return timestamp; }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+
+    public String getSenderId() {
+        return senderId;
+    }
+
+    public void setSenderId(String senderId) {
+        this.senderId = senderId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 }

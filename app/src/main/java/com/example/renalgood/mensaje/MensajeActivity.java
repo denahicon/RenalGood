@@ -6,13 +6,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.renalgood.Chat.ChatMessage;
 import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
 import com.example.renalgood.Nutriologo.CitasActivity;
@@ -32,25 +30,79 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+
+
 public class MensajeActivity extends AppCompatActivity {
     private RecyclerView rvMensajes;
     private List<MensajeList> mensajeList;
     private MensajeListAdapter mensajeAdapter;
     private FirebaseFirestore db;
-    private String nutriologoId;
     private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
+    private DatabaseReference mDatabase;
+    private String nutriologoId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mensajes);
 
+        mDatabase = FirebaseDatabase.getInstance("https://ya-basta-default-rtdb.firebaseio.com/").getReference();
+        nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Obtener el ID del nutriólogo autenticado
+
+        cargarMensajesNutriologo(nutriologoId);
         initializeViews();
         setupFirebase();
         setupRecyclerView();
         loadMensajes();
         setupNavigationListeners();
         debugDatabase();
+    }
+
+    private void cargarMensajesNutriologo(String nutriologoId) {
+        mDatabase.child("vinculaciones").orderByChild("nutriologoId").equalTo(nutriologoId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot vinculacionSnapshot : dataSnapshot.getChildren()) {
+                            Vinculacion vinculacion = vinculacionSnapshot.getValue(Vinculacion.class);
+                            if (vinculacion != null && "activo".equals(vinculacion.getEstado())) {
+                                String chatId = vinculacion.getPacienteId() + "_" + nutriologoId;
+                                cargarMensajes(chatId);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.w("MensajeActivity", "Error obteniendo vinculaciones.", databaseError.toException());
+                    }
+                });
+    }
+
+    private void cargarMensajes(String chatId) {
+        mDatabase.child("chats").child(chatId).child("messages")
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        List<Mensaje> mensajes = new ArrayList<>();
+                        for (DataSnapshot mensajeSnapshot : dataSnapshot.getChildren()) {
+                            Mensaje mensaje = mensajeSnapshot.getValue(Mensaje.class);
+                            mensajes.add(mensaje);
+                        }
+                        actualizarUIConMensajes(mensajes);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.w("MensajeActivity", "Error obteniendo mensajes.", databaseError.toException());
+                    }
+                });
+    }
+
+    private void actualizarUIConMensajes(List<Mensaje> mensajes) {
+        // Código para actualizar la interfaz de usuario con los mensajes obtenidos
+        // ...
+        Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajes.size() + " elementos");
     }
 
     private void debugDatabase() {
@@ -257,8 +309,7 @@ public class MensajeActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     Log.e("MensajeActivity", "Error cargando vinculaciones: ", e);
-                    Toast.makeText(this, "Error al cargar mensajes: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error al cargar mensajes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -277,7 +328,7 @@ public class MensajeActivity extends AppCompatActivity {
                         Log.e("MensajeActivity", "No se encontró el paciente: " + pacienteId);
                     }
                 })
-                .addOnFailureListener(e -> {  // Corregido de addOnFailureError a addOnFailureListener
+                .addOnFailureListener(e -> {
                     Log.e("MensajeActivity", "Error cargando info del paciente: " + e.toString());
                 });
     }
