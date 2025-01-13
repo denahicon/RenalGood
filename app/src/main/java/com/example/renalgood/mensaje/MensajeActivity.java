@@ -5,13 +5,10 @@ import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.renalgood.Chat.ChatMessage;
 import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
 import com.example.renalgood.Nutriologo.CitasActivity;
 import com.example.renalgood.Nutriologo.NutriologoActivity;
@@ -30,11 +27,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-
-
 public class MensajeActivity extends AppCompatActivity {
     private RecyclerView rvMensajes;
-    private List<MensajeList> mensajeList;
+    private List<Mensaje> mensajeList;
     private MensajeListAdapter mensajeAdapter;
     private FirebaseFirestore db;
     private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
@@ -49,12 +44,13 @@ public class MensajeActivity extends AppCompatActivity {
         mDatabase = FirebaseDatabase.getInstance("https://ya-basta-default-rtdb.firebaseio.com/").getReference();
         nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Obtener el ID del nutriólogo autenticado
 
-        cargarMensajesNutriologo(nutriologoId);
         initializeViews();
         setupFirebase();
         setupRecyclerView();
-        loadMensajes();
         setupNavigationListeners();
+
+        cargarMensajesNutriologo(nutriologoId);
+
         debugDatabase();
     }
 
@@ -100,16 +96,30 @@ public class MensajeActivity extends AppCompatActivity {
     }
 
     private void actualizarUIConMensajes(List<Mensaje> mensajes) {
-        // Código para actualizar la interfaz de usuario con los mensajes obtenidos
-        // ...
+        List<MensajeList> mensajeListItems = new ArrayList<>();
+        for (Mensaje mensaje : mensajes) {
+            mensajeListItems.add(convertToMensajeList(mensaje));
+        }
+
+        mensajeAdapter.updateList(mensajeListItems);
+
         Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajes.size() + " elementos");
+    }
+
+    private MensajeList convertToMensajeList(Mensaje mensaje) {
+        String pacienteId = mensaje.getSenderId(); // Asumimos que senderId es el pacienteId
+        String nombre = ""; // Aquí deberías obtener el nombre del paciente
+        String profilePic = ""; // Aquí deberías obtener la imagen de perfil del paciente
+        String ultimoMensaje = mensaje.getMessage();
+        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(mensaje.getTimestamp()));
+
+        return new MensajeList(pacienteId, nombre, ultimoMensaje, hora, profilePic);
     }
 
     private void debugDatabase() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Log.d("DEBUG", "Usuario actual (Nutriólogo): " + userId);
 
-        // Verificar vinculaciones
         db.collection("vinculaciones")
                 .whereEqualTo("nutriologoId", userId)
                 .whereEqualTo("estado", "activo")
@@ -125,7 +135,6 @@ public class MensajeActivity extends AppCompatActivity {
                     Log.e("DEBUG", "Error consultando vinculaciones: " + e.toString());
                 });
 
-        // Verificar chats existentes
         DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference().child("chats");
         chatRef.get().addOnSuccessListener(snapshot -> {
             Log.d("DEBUG", "Total chats en Realtime Database: " + snapshot.getChildrenCount());
@@ -170,7 +179,6 @@ public class MensajeActivity extends AppCompatActivity {
             highlightCurrentIcon(ivCarta);
         });
 
-        // Resaltar el ícono actual al iniciar
         highlightCurrentIcon(ivMensaje);
     }
 
@@ -199,10 +207,8 @@ public class MensajeActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // Añadir estos logs
         Log.d("DEBUG_CHAT", "NutriologoId: " + nutriologoId);
 
-        // Verificar vinculaciones directamente
         db.collection("vinculaciones")
                 .whereEqualTo("nutriologoId", nutriologoId)
                 .whereEqualTo("estado", "activo")
@@ -219,161 +225,17 @@ public class MensajeActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        mensajeList = new ArrayList<>();
+        List<MensajeList> mensajeList = new ArrayList<>();
+
         mensajeAdapter = new MensajeListAdapter(mensajeList, mensaje -> {
             Intent intent = new Intent(this, MensajeDetalleActivity.class);
             intent.putExtra("pacienteId", mensaje.getPacienteId());
             intent.putExtra("nombrePaciente", mensaje.getNombre());
             startActivity(intent);
         });
+
         rvMensajes.setLayoutManager(new LinearLayoutManager(this));
         rvMensajes.setAdapter(mensajeAdapter);
-    }
-
-    private void loadMensajes() {
-        Log.d("MensajeActivity", "Cargando mensajes para nutriólogo: " + nutriologoId);
-
-        // Mantener una lista temporal para acumular todos los mensajes
-        List<MensajeList> tempMensajeList = new ArrayList<>();
-
-        db.collection("vinculaciones")
-                .whereEqualTo("nutriologoId", nutriologoId)
-                .whereEqualTo("estado", "activo")
-                .get()  // Cambiado de addSnapshotListener a get() para manejar mejor la sincronización
-                .addOnSuccessListener(querySnapshot -> {
-                    if (querySnapshot.isEmpty()) {
-                        Log.d("MensajeActivity", "No se encontraron vinculaciones activas");
-                        mensajeAdapter.notifyDataSetChanged();
-                        return;
-                    }
-
-                    Log.d("MensajeActivity", "Vinculaciones encontradas: " + querySnapshot.size());
-                    final int[] processedCount = {0};
-
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        String pacienteId = doc.getString("pacienteId");
-                        if (pacienteId != null) {
-                            db.collection("pacientes")
-                                    .document(pacienteId)
-                                    .get()
-                                    .addOnSuccessListener(pacienteDoc -> {
-                                        if (pacienteDoc.exists()) {
-                                            String nombre = pacienteDoc.getString("nombre");
-                                            String profilePic = pacienteDoc.getString("profilePic");
-
-                                            // Obtener el último mensaje
-                                            String chatId = getChatId(nutriologoId, pacienteId);
-                                            FirebaseDatabase.getInstance().getReference()
-                                                    .child("chats")
-                                                    .child(chatId)
-                                                    .child("messages")
-                                                    .limitToLast(1)
-                                                    .get()
-                                                    .addOnSuccessListener(snapshot -> {
-                                                        String lastMessage = "No hay mensajes";
-                                                        String time = "";
-
-                                                        for (DataSnapshot messageSnap : snapshot.getChildren()) {
-                                                            ChatMessage message = messageSnap.getValue(ChatMessage.class);
-                                                            if (message != null) {
-                                                                lastMessage = message.getMessage();
-                                                                Date messageDate = new Date(message.getTimestamp());
-                                                                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                                                                time = sdf.format(messageDate);
-                                                            }
-                                                        }
-
-                                                        MensajeList mensajeItem = new MensajeList(
-                                                                pacienteId,
-                                                                nombre,
-                                                                lastMessage,
-                                                                time,
-                                                                profilePic
-                                                        );
-
-                                                        tempMensajeList.add(mensajeItem);
-                                                        processedCount[0]++;
-
-                                                        // Si es el último elemento, actualizar el adapter
-                                                        if (processedCount[0] == querySnapshot.size()) {
-                                                            mensajeList.clear();
-                                                            mensajeList.addAll(tempMensajeList);
-                                                            mensajeAdapter.notifyDataSetChanged();
-                                                            Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajeList.size() + " elementos");
-                                                        }
-                                                    });
-                                        }
-                                    });
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("MensajeActivity", "Error cargando vinculaciones: ", e);
-                    Toast.makeText(this, "Error al cargar mensajes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void loadPacienteInfo(String pacienteId) {
-        db.collection("pacientes")
-                .document(pacienteId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String nombre = documentSnapshot.getString("nombre");
-                        String profilePic = documentSnapshot.getString("profilePic");
-                        Log.d("MensajeActivity", "Información de paciente cargada: " + nombre);
-                        String chatId = getChatId(nutriologoId, pacienteId);
-                        loadLastMessage(chatId, pacienteId, nombre, profilePic);
-                    } else {
-                        Log.e("MensajeActivity", "No se encontró el paciente: " + pacienteId);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("MensajeActivity", "Error cargando info del paciente: " + e.toString());
-                });
-    }
-
-    private void loadLastMessage(String chatId, String pacienteId, String nombre, String profilePic) {
-        FirebaseDatabase.getInstance().getReference()
-                .child("chats")
-                .child(chatId)
-                .child("messages")
-                .limitToLast(1)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String lastMessage = "";
-                        String time = "";
-
-                        for (DataSnapshot messageSnap : snapshot.getChildren()) {
-                            ChatMessage message = messageSnap.getValue(ChatMessage.class);
-                            if (message != null) {
-                                lastMessage = message.getMessage();
-                                Date messageDate = new Date(message.getTimestamp());
-                                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                                time = sdf.format(messageDate);
-                            }
-                        }
-
-                        MensajeList mensajeItem = new MensajeList(
-                                pacienteId,
-                                nombre,
-                                lastMessage.isEmpty() ? "No hay mensajes" : lastMessage,
-                                time,
-                                profilePic
-                        );
-
-                        if (!mensajeList.contains(mensajeItem)) {
-                            mensajeList.add(mensajeItem);
-                            mensajeAdapter.notifyDataSetChanged();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("MensajeActivity", "Error loading last message: " + error.getMessage());
-                    }
-                });
     }
 
     private String getChatId(String nutriologoId, String pacienteId) {

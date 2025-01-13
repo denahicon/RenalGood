@@ -1,11 +1,20 @@
 package com.example.renalgood.mensaje;
 
-class Mensaje {
+public class Mensaje {
     private String message;
     private boolean read;
     private String senderId;
     private long timestamp;
 
+    // Constructor
+    public Mensaje(String message, boolean read, String senderId, long timestamp) {
+        this.message = message;
+        this.read = read;
+        this.senderId = senderId;
+        this.timestamp = timestamp;
+    }
+
+    // Getter and Setter methods
     public String getMessage() {
         return message;
     }
