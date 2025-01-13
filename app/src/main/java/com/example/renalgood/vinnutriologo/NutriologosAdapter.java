@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.renalgood.Nutriologo.Nutriologo;
 import com.example.renalgood.R;
-
 import java.util.ArrayList;
 import java.util.List;
 

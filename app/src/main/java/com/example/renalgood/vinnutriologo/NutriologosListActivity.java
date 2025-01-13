@@ -28,29 +28,41 @@ public class NutriologosListActivity extends AppCompatActivity implements Nutrio
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nutriologos_list);
 
+        // Initialize RecyclerView and set its layout manager and adapter
         recyclerNutriologos = findViewById(R.id.recyclerNutriologos);
         recyclerNutriologos.setLayoutManager(new LinearLayoutManager(this));
 
         mAdapter = new NutriologosAdapter(this);
         recyclerNutriologos.setAdapter(mAdapter);
 
+        // Initialize Firestore
         db = FirebaseFirestore.getInstance();
         loadNutriologos();
     }
 
     private void loadNutriologos() {
+        // Fetch the "nutriologos" collection from Firestore
         db.collection("nutriologos")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    // Create a list to store nutriologists
                     List<Nutriologo> nutriologos = new ArrayList<>();
+
+                    // Iterate over the documents returned by the query
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        // Convert each document into a Nutriologo object
                         Nutriologo nutriologo = document.toObject(Nutriologo.class);
+                        // Set the document ID in the Nutriologo object
                         nutriologo.setId(document.getId());
+                        // Add the nutriologist to the list
                         nutriologos.add(nutriologo);
                     }
+
+                    // Set the list of nutriologists in the RecyclerView adapter
                     mAdapter.setNutriologos(nutriologos);
                 })
                 .addOnFailureListener(e -> {
+                    // Handle the case where the query fails
                     Log.e(TAG, "Error al cargar nutriólogos: ", e);
                     Toast.makeText(this,
                             "Error al cargar nutriólogos: " + e.getMessage(),
@@ -62,13 +74,15 @@ public class NutriologosListActivity extends AppCompatActivity implements Nutrio
     public void onNutriologoClick(Nutriologo nutriologo) {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // Agregar logs para depuración
+        // Add logs for debugging
         Log.d("NutriologosListActivity", "Vinculando paciente: " + userId + " con nutriólogo: " + nutriologo.getId());
 
+        // Link the current user with the selected nutriologist
         VinculacionManager.vincularConNutriologo(this, userId, nutriologo.getId(), new VinculacionManager.OnVinculacionListener() {
             @Override
             public void onSuccess() {
                 Log.d("NutriologosListActivity", "Vinculación exitosa");
+                // Start the ChatActivity with the selected nutriologist's ID
                 Intent intent = new Intent(NutriologosListActivity.this, ChatActivity.class);
                 intent.putExtra("nutriologoId", nutriologo.getId());
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

@@ -46,10 +46,10 @@ public class ChatActivity extends AppCompatActivity {
         // Obtener nutriologoId del intent si viene de la vista de perfil
         nutriologoId = getIntent().getStringExtra("nutriologoId");
         if (nutriologoId != null) {
-            Log.d("DEBUG", "nutriologoId desde intent: " + nutriologoId);
+            Log.d(TAG, "NutriologoId desde intent: " + nutriologoId);
             showChatUI();
         } else {
-            Log.d("DEBUG", "Verificando vinculación existente...");
+            Log.d(TAG, "Verificando vinculación existente...");
             checkVinculacion();
         }
         setupUI();
@@ -108,12 +108,14 @@ public class ChatActivity extends AppCompatActivity {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         nutriologoId = queryDocumentSnapshots.getDocuments().get(0).getString("nutriologoId");
                         if (nutriologoId != null) {
+                            Log.d(TAG, "Vinculación encontrada con nutriólogo: " + nutriologoId);
                             showChatUI();
                             setupChatHeader();
                         } else {
                             showNoVinculacionUI();
                         }
                     } else {
+                        Log.d(TAG, "No se encontraron vinculaciones activas");
                         showNoVinculacionUI();
                     }
                 })
@@ -256,6 +258,7 @@ public class ChatActivity extends AppCompatActivity {
 
         String userId = mAuth.getCurrentUser().getUid();
         chatRoomId = VinculacionManager.getChatId(userId, nutriologoId);
+        Log.d(TAG, "Generated chatRoomId: " + chatRoomId);
 
         setupChat();
     }
@@ -279,20 +282,32 @@ public class ChatActivity extends AppCompatActivity {
                 if (message != null) {
                     mAdapter.addMessage(message);
                     binding.recyclerChat.smoothScrollToPosition(mAdapter.getItemCount() - 1);
+                    Log.d(TAG, "Message added: " + message.getMessage());
+                } else {
+                    Log.e(TAG, "Error: Message is null in onChildAdded");
                 }
             }
 
             @Override
-            public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
+            public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                // Handle child changed if needed
+            }
 
             @Override
-            public void onChildRemoved(DataSnapshot snapshot) {}
+            public void onChildRemoved(DataSnapshot snapshot) {
+                // Handle child removed if needed
+            }
 
             @Override
-            public void onChildMoved(DataSnapshot snapshot, String previousChildName) {}
+            public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+                // Handle child moved if needed
+            }
 
             @Override
-            public void onCancelled(DatabaseError error) {}
+            public void onCancelled(DatabaseError error) {
+                Log.e(TAG, "Error in chatRef: " + error.getMessage());
+                Toast.makeText(ChatActivity.this, "Error loading chat: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
