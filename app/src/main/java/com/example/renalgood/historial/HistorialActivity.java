@@ -75,10 +75,10 @@ public class HistorialActivity extends AppCompatActivity {
 
         db.collection("usuarios")
                 .document(userId)
-                .collection("historial")
-                .whereGreaterThanOrEqualTo("date", startDate)
-                .whereLessThanOrEqualTo("date", endDate)
-                .orderBy("date", Query.Direction.DESCENDING)
+                .collection("meals")  // Apuntar a la colección 'meals'
+                .whereGreaterThanOrEqualTo("createdAt", startDate)
+                .whereLessThanOrEqualTo("createdAt", endDate)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Log.d("HistorialActivity", "Documentos encontrados: " + queryDocumentSnapshots.size());
@@ -88,8 +88,8 @@ public class HistorialActivity extends AppCompatActivity {
                         DailyMealHistory history = document.toObject(DailyMealHistory.class);
                         if (history != null) {
                             historyList.add(history);
-                            Log.d("HistorialActivity", "Fecha: " + history.getDate() +
-                                    ", Calorías: " + history.getConsumedCalories());
+                            Log.d("HistorialActivity", "Fecha: " + history.getCreatedAt() +
+                                    ", Calorías: " + history.getCaloriasDiarias());
                         }
                     }
                     historialAdapter.submitList(historyList);

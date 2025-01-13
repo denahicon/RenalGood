@@ -50,9 +50,9 @@ public class HistorialAdapter extends ListAdapter<DailyMealHistory, HistorialAda
         }
 
         void bind(DailyMealHistory history) {
-            tvFecha.setText(formatDate(history.getDate()));
+            tvFecha.setText(formatDate(history.getCreatedAt()));
             tvCaloriasMeta.setText(String.format("Meta: %.0f kcal", history.getTargetCalories()));
-            tvCaloriasConsumidas.setText(String.format("Consumido: %.0f kcal", history.getConsumedCalories()));
+            tvCaloriasConsumidas.setText(String.format("Consumido: %d kcal", history.getCaloriasDiarias()));
 
             // Configurar el RecyclerView para las comidas del día
             List<MealRecord> mealsList = new ArrayList<>(history.getMeals().values());
@@ -69,7 +69,7 @@ public class HistorialAdapter extends ListAdapter<DailyMealHistory, HistorialAda
     static class DiffCallback extends DiffUtil.ItemCallback<DailyMealHistory> {
         @Override
         public boolean areItemsTheSame(@NonNull DailyMealHistory oldItem, @NonNull DailyMealHistory newItem) {
-            return oldItem.getDate().equals(newItem.getDate());
+            return oldItem.getCreatedAt().equals(newItem.getCreatedAt());
         }
 
         @Override
