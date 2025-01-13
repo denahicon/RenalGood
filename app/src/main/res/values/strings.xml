@@ -1,0 +1,90 @@
+<resources>
+    <string name="app_name">RenalGood</string>
+    <string name="registro_paciente">Registro Paciente</string>
+    <string name="nombre">Nombre</string>
+    <string name="correo">Correo</string>
+    <string name="universidad">Universidad</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="contrasena1">Contraseña</string>
+    <string name="edad">Edad</string>
+    <string name="peso">Peso</string>
+    <string name="altura">Altura</string>
+    <string name="situacion_clinica">Situación Clínica</string>
+    <string name="actividad_fisica">Actividad Física</string>
+    <string name="dias_semana">Días por Semana</string>
+    <string name="sexo">Sexo</string>
+    <string name="siguiente">Siguiente</string>
+    <string name="crear_cuenta">Crear Cuenta</string>
+    <string name="edit_text_email_hint">Correo electrónico</string>
+    <string name="button_reset_text">Restablecer contraseña</string>
+    <string name="email_empty_error">Por favor, introduce tu correo electrónico</string>
+    <string name="email_reset_success">Se ha enviado un correo electrónico para restablecer tu contraseña</string>
+    <string name="email_reset_failure">Error al enviar el correo electrónico para restablecer la contraseña</string>
+    <string name="registro_nutriologo">Registro Nutriólogo</string>
+    <string name="introduce_nombre_completo">Por favor, introduce tu nombre completo</string>
+    <string name="introduce_area_especializacion">Por favor, introduce tu área de especialización</string>
+    <string name="introduce_anios_experiencia">Por favor, introduce tus años de experiencia</string>
+    <string name="introduce_direccion_clinica">Por favor, introduce la dirección de tu clínica</string>
+    <string name="introduce_correo">Por favor, introduce tu correo electrónico</string>
+    <string name="introduce_contrasena">Por favor, introduce tu contraseña</string>
+    <string name="subir_documentos">Sube los documentos necesarios (cédula profesional y foto)</string>
+    <string name="error_faltan_datos">Por favor, completa todos los campos</string>
+    <string name="exito_cuenta_creada">¡Cuenta creada exitosamente!</string>
+    <string name="error_creacion_cuenta">Error al crear la cuenta. Inténtalo de nuevo</string>
+    <string name="nombre_hint">Nombre</string>
+    <string name="siguiente_button">Siguiente</string>
+    <string name="subir_archivo">Subir archivo</string>
+    <string name="nombre_archivo_hint">Nombre del archivo</string>
+    <string name="subir_foto">Subir foto</string>
+    <string name="tomar_foto">Tomar foto</string>
+    <string name="nombre_foto_hint">Nombre de la foto</string>
+    <string name="por_favor_llena_todos_los_campos">Por favor llena todos los campos</string>
+    <string name="registro_exitoso">Registro exitoso</string>
+    <string name="error_al_registrar_en_firestore">Error al registrar en Firestore: %1$s</string>
+    <string name="error_al_crear_cuenta">Error al crear cuenta: %1$s</string>
+    <string name="texto_reconocido">Texto reconocido: %1$s</string>
+    <string name="error_al_reconocer_texto">Error al reconocer texto: %1$s</string>
+
+
+    <string-array name="situacion_clinica">
+        <item>ERCA</item>
+        <item>Hemodiálisis</item>
+        <item>Diálisis peritoneal</item>
+        <item>Trasplante</item>
+    </string-array>
+
+    <string-array name="actividad_fisica">
+        <item>Sí</item>
+        <item>No</item>
+    </string-array>
+
+    <string-array name="dias_semana">
+        <item>1-3 días</item>
+        <item>3-5 días a la semana</item>
+        <item>6-7 días a la semana</item>
+        <item>2 veces al día</item>
+    </string-array>
+
+    <string-array name="sexo">
+        <item>Hombre</item>
+        <item>Mujer</item>
+    </string-array>
+
+    <string-array name="tipo_usuario">
+        <item>Registro</item>
+        <item>Nutriologo</item>
+        <item>Paciente</item>
+    </string-array>
+
+
+    <string-array name="nivel_creatinina">
+        <item>0.6 mg/dL</item>
+        <item>0.7 mg/dL</item>
+        <item>0.8 mg/dL</item>
+        <item>0.9 mg/dL</item>
+        <item>1.0 mg/dL</item>
+        <item>1.1 mg/dL</item>
+        <item>1.2 mg/dL</item>
+    </string-array>
+
+</resources>

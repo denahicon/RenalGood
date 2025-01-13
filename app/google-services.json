@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803977121904",
+    "project_id": "ya-basta",
+    "storage_bucket": "ya-basta.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803977121904:android:fd3d6226930a5e81abe4b5",
+        "android_client_info": {
+          "package_name": "com.example.renalgood"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrhxPws6NuddeJHZgLZMXSbHGUg_f8WFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

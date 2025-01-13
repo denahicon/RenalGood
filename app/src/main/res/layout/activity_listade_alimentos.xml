@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:background="#d3d3d3">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lista de Alimentos"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/tipo1"
+            android:textColor="#000000"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"/>
+
+        <SearchView
+            android:id="@+id/searchViewAlimentos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:queryHint="Buscar alimentos"
+            android:iconifiedByDefault="false"
+            android:layout_marginBottom="16dp"
+            android:background="@android:color/white"
+            android:elevation="2dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewAlimentos"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        android:weightSum="6"
+        android:paddingBottom="16dp">
+
+        <ImageView
+            android:id="@+id/ivHome"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_home"
+            android:contentDescription="Inicio"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivLupa"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_search"
+            android:contentDescription="Buscar"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivChef"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="Recetas"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivMensaje"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_message"
+            android:contentDescription="Mensajes"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivCarta"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_email"
+            android:contentDescription="Notificaciones"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+
+        <ImageView
+            android:id="@+id/ivCalendario"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_calendar"
+            android:contentDescription="Calendario"
+            android:scaleType="fitCenter"
+            android:padding="16dp"/>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CircularImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+        <item name="android:padding">4dp</item>
+    </style>
+
+    <style name="AppTheme.Button.Aprobar" parent="Widget.AppCompat.Button.Colored">
+        <item name="colorButtonNormal">#4CAF50</item>
+        <item name="colorControlHighlight">#43A047</item>
+        <item name="android:textColor">#000000</item>
+        <item name="backgroundTint">@color/red</item>
+    </style>
+
+    <style name="AppTheme.Button.Rechazar" parent="Widget.AppCompat.Button.Colored">
+        <item name="colorButtonNormal">#F44336</item>
+        <item name="colorControlHighlight">#E53935</item>
+        <item name="android:textColor">#000000</item>
+        <item name="backgroundTint">@color/red</item>
+    </style>
+
+    <style name="ShapeAppearance.App.TopRounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">12dp</item>
+        <item name="cornerSizeTopLeft">12dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
+</resources>
