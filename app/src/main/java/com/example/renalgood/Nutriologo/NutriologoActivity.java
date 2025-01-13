@@ -257,75 +257,63 @@ public class NutriologoActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String photoUrl = documentSnapshot.getString("photoUrl");
-                        String solicitudId = documentSnapshot.getString("solicitudId");
+                        // Obtener el ID de la solicitud
+                        String solicitudId = documentSnapshot.getString("solicitud");
+                        Log.d(TAG, "SolicitudId obtenido: " + solicitudId);
 
-                        Log.d(TAG, "photoUrl: " + photoUrl);
-                        Log.d(TAG, "solicitudId: " + solicitudId);
+                        if (solicitudId != null && !solicitudId.isEmpty()) {
+                            // Construir la ruta exacta basada en lo que vemos en Firebase Storage
+                            StorageReference storageRef = FirebaseStorage.getInstance().getReference()
+                                    .child("solicitudes")
+                                    .child(solicitudId)
+                                    .child("perfil.jpg");
 
-                        if (photoUrl != null && !photoUrl.isEmpty()) {
-                            cargarImagenConGlide(photoUrl);
-                        } else if (solicitudId != null) {
-                            String profilePhotoPath = "solicitudes/" + solicitudId + "/perfil.jpg";
-                            Log.d(TAG, "Intentando cargar desde path: " + profilePhotoPath);
-
-                            StorageReference imageRef = FirebaseStorage.getInstance()
-                                    .getReference()
-                                    .child(profilePhotoPath);
-
-                            imageRef.getDownloadUrl()
+                            // Intentar obtener la URL de descarga
+                            storageRef.getDownloadUrl()
                                     .addOnSuccessListener(uri -> {
-                                        Log.d(TAG, "URL obtenida: " + uri.toString());
-                                        cargarImagenConGlide(uri.toString());
+                                        Log.d(TAG, "URL de imagen obtenida: " + uri.toString());
+                                        // Usar Glide para cargar la imagen
+                                        Glide.with(this)
+                                                .load(uri)
+                                                .placeholder(R.drawable.ic_camera)
+                                                .error(R.drawable.ic_camera)
+                                                .into(profileImage);
                                     })
                                     .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Error obteniendo URL de imagen: " + e.getMessage());
-                                        Log.e(TAG, "Path intentado: " + profilePhotoPath);
+                                        Log.e(TAG, "Error al obtener URL: " + e.getMessage());
                                         profileImage.setImageResource(R.drawable.ic_camera);
-
-                                        intentarRutaAlternativa(solicitudId);
                                     });
                         } else {
-                            Log.e(TAG, "No se encontró ni photoUrl ni solicitudId");
+                            Log.e(TAG, "No se encontró ID de solicitud");
                             profileImage.setImageResource(R.drawable.ic_camera);
                         }
                     } else {
-                        Log.e(TAG, "Documento de nutriólogo no existe");
+                        Log.e(TAG, "No se encontró el documento del nutriólogo");
                         profileImage.setImageResource(R.drawable.ic_camera);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error cargando datos del nutriólogo: " + e.getMessage());
+                    Log.e(TAG, "Error al obtener datos del nutriólogo: " + e.getMessage());
                     profileImage.setImageResource(R.drawable.ic_camera);
                 });
     }
 
-    private void intentarRutaAlternativa(String solicitudId) {
-        // Intentar listar el contenido de la carpeta para ver qué archivos hay
-        StorageReference folderRef = FirebaseStorage.getInstance()
-                .getReference()
-                .child("solicitudes/" + solicitudId);
+    private void verificarRutaImagen(String solicitudId) {
+        StorageReference folderRef = FirebaseStorage.getInstance().getReference()
+                .child("solicitudes")
+                .child(solicitudId);
 
-        Log.d(TAG, "Intentando listar contenido de: solicitudes/" + solicitudId);
-
-        // Listar todo el contenido de la carpeta
         folderRef.listAll()
                 .addOnSuccessListener(listResult -> {
                     for (StorageReference item : listResult.getItems()) {
                         Log.d(TAG, "Archivo encontrado: " + item.getPath());
-                        // Si encontramos algún archivo que parece ser una imagen de perfil
-                        if (item.getName().toLowerCase().contains("perfil") ||
-                                item.getName().toLowerCase().contains("profile")) {
-                            item.getDownloadUrl()
-                                    .addOnSuccessListener(uri -> cargarImagenConGlide(uri.toString()));
-                            break;
-                        }
                     }
                 })
-                .addOnFailureListener(e ->
-                        Log.e(TAG, "Error listando contenido de carpeta: " + e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error al listar archivos: " + e.getMessage());
+                });
     }
-
+    
     private void irALogin() {
         try {
             if (mAuth != null) {
