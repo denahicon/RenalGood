@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.example.renalgood.Nutriologo.NutriologoActivity
 import com.example.renalgood.Paciente.PacienteActivity
 import com.example.renalgood.auth.AdminLoginActivity
@@ -22,6 +23,8 @@ import com.example.renalgood.auth.RegistroPacienteActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 
 private const val TAG = "MainActivity"
 
@@ -36,8 +39,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
     private lateinit var eyeIcon: ImageView
     private var isPasswordVisible = false
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +65,6 @@ class MainActivity : AppCompatActivity() {
         eyeIcon = findViewById(R.id.ojo_contrasena)
         eyeIcon.setOnClickListener { togglePasswordVisibility() }
         eyeIcon = findViewById(R.id.ojo_contrasena)
-
     }
 
     private fun setupSpinner() {

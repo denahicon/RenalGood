@@ -224,5 +224,4 @@
             android:src="@drawable/ic_email"
             android:contentDescription="Notificaciones" />
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

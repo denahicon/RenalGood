@@ -44,6 +44,7 @@
     <string name="error_al_crear_cuenta">Error al crear cuenta: %1$s</string>
     <string name="texto_reconocido">Texto reconocido: %1$s</string>
     <string name="error_al_reconocer_texto">Error al reconocer texto: %1$s</string>
+    <string name="profile_image_desc" />
 
 
     <string-array name="situacion_clinica">

@@ -2,13 +2,17 @@ package com.example.renalgood.Nutriologo;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
@@ -17,12 +21,13 @@ import com.bumptech.glide.request.target.Target;
 import com.example.renalgood.MainActivity;
 import com.example.renalgood.R;
 import com.example.renalgood.mensaje.MensajeActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import de.hdodenhof.circleimageview.CircleImageView;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class NutriologoActivity extends AppCompatActivity {
     private static final String TAG = "NutriologoActivity";
@@ -86,25 +91,19 @@ public class NutriologoActivity extends AppCompatActivity {
     }
 
     private void setupNavigationListeners() {
-        ivHome.setOnClickListener(view -> {
-            highlightCurrentIcon(ivHome);
-        });
-
+        ivHome.setOnClickListener(view -> highlightCurrentIcon(ivHome));
         ivMensaje.setOnClickListener(view -> {
             navigateToActivity(MensajeActivity.class);
             highlightCurrentIcon(ivMensaje);
         });
-
         ivCalendario.setOnClickListener(view -> {
             navigateToActivity(CitasActivity.class);
             highlightCurrentIcon(ivCalendario);
         });
-
         ivPacientesVinculados.setOnClickListener(view -> {
             navigateToActivity(PacientesVinculadosActivity.class);
             highlightCurrentIcon(ivPacientesVinculados);
         });
-
         ivCarta.setOnClickListener(view -> {
             navigateToActivity(BuzonQuejasActivity.class);
             highlightCurrentIcon(ivCarta);
@@ -159,8 +158,10 @@ public class NutriologoActivity extends AppCompatActivity {
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         procesarDocumentoNutriologo(documentSnapshot);
+                    } else {
+                        Log.e(TAG, "El documento no existe");
+                        Toast.makeText(this, "Error: No se encontraron datos", Toast.LENGTH_SHORT).show();
                     }
-                    cargarImagen(userId);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error al cargar datos", e);
@@ -170,13 +171,13 @@ public class NutriologoActivity extends AppCompatActivity {
 
     private void procesarDocumentoNutriologo(DocumentSnapshot documentSnapshot) {
         try {
-            if (documentSnapshot != null && documentSnapshot.exists()) {
+            if (documentSnapshot.exists()) {
                 String nombre = documentSnapshot.getString("nombre");
                 String areaEsp = documentSnapshot.getString("areaEspecializacion");
                 String anosExp = documentSnapshot.getString("anosExperiencia");
                 String direccion = documentSnapshot.getString("direccionClinica");
                 String correo = documentSnapshot.getString("correo");
-                String photoUrl = obtenerPhotoUrl(documentSnapshot);
+                String photoUrl = documentSnapshot.getString("selfieUrl"); // Usamos selfieUrl para obtener la imagen de perfil
                 universidad = documentSnapshot.getString("universidad");
 
                 actualizarUI(nombre, areaEsp, anosExp, direccion, correo, photoUrl);
@@ -188,17 +189,6 @@ public class NutriologoActivity extends AppCompatActivity {
             Log.e(TAG, "Error al procesar documento", e);
             Toast.makeText(this, "Error al procesar los datos", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private String obtenerPhotoUrl(DocumentSnapshot documentSnapshot) {
-        String photoUrl = documentSnapshot.getString("photoUrl");
-        if (photoUrl == null || photoUrl.isEmpty()) {
-            photoUrl = documentSnapshot.getString("profilePhotoUrl");
-        }
-        if (photoUrl == null || photoUrl.isEmpty()) {
-            photoUrl = documentSnapshot.getString("profilePhotoPath");
-        }
-        return photoUrl;
     }
 
     private void actualizarUI(String nombre, String areaEsp, String anosExp,
@@ -226,6 +216,7 @@ public class NutriologoActivity extends AppCompatActivity {
     }
 
     private void cargarImagenConGlide(String url) {
+        Log.d(TAG, "Cargando imagen con URL: " + url);
         Glide.with(this)
                 .load(url)
                 .placeholder(R.drawable.ic_camera)
@@ -234,7 +225,7 @@ public class NutriologoActivity extends AppCompatActivity {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model,
                                                 Target<Drawable> target, boolean isFirstResource) {
-                        Log.e(TAG, "Error cargando imagen con Glide: " + e.getMessage());
+                        Log.e(TAG, "Error cargando imagen con Glide: " + (e != null ? e.getMessage() : "Desconocido"));
                         return false;
                     }
 
@@ -249,71 +240,6 @@ public class NutriologoActivity extends AppCompatActivity {
                 .into(profileImage);
     }
 
-    private void cargarImagen(String userId) {
-        Log.d(TAG, "Intentando cargar imagen para userId: " + userId);
-
-        db.collection("nutriologos")
-                .document(userId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        // Obtener el ID de la solicitud
-                        String solicitudId = documentSnapshot.getString("solicitud");
-                        Log.d(TAG, "SolicitudId obtenido: " + solicitudId);
-
-                        if (solicitudId != null && !solicitudId.isEmpty()) {
-                            // Construir la ruta exacta basada en lo que vemos en Firebase Storage
-                            StorageReference storageRef = FirebaseStorage.getInstance().getReference()
-                                    .child("solicitudes")
-                                    .child(solicitudId)
-                                    .child("perfil.jpg");
-
-                            // Intentar obtener la URL de descarga
-                            storageRef.getDownloadUrl()
-                                    .addOnSuccessListener(uri -> {
-                                        Log.d(TAG, "URL de imagen obtenida: " + uri.toString());
-                                        // Usar Glide para cargar la imagen
-                                        Glide.with(this)
-                                                .load(uri)
-                                                .placeholder(R.drawable.ic_camera)
-                                                .error(R.drawable.ic_camera)
-                                                .into(profileImage);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Error al obtener URL: " + e.getMessage());
-                                        profileImage.setImageResource(R.drawable.ic_camera);
-                                    });
-                        } else {
-                            Log.e(TAG, "No se encontró ID de solicitud");
-                            profileImage.setImageResource(R.drawable.ic_camera);
-                        }
-                    } else {
-                        Log.e(TAG, "No se encontró el documento del nutriólogo");
-                        profileImage.setImageResource(R.drawable.ic_camera);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error al obtener datos del nutriólogo: " + e.getMessage());
-                    profileImage.setImageResource(R.drawable.ic_camera);
-                });
-    }
-
-    private void verificarRutaImagen(String solicitudId) {
-        StorageReference folderRef = FirebaseStorage.getInstance().getReference()
-                .child("solicitudes")
-                .child(solicitudId);
-
-        folderRef.listAll()
-                .addOnSuccessListener(listResult -> {
-                    for (StorageReference item : listResult.getItems()) {
-                        Log.d(TAG, "Archivo encontrado: " + item.getPath());
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error al listar archivos: " + e.getMessage());
-                });
-    }
-    
     private void irALogin() {
         try {
             if (mAuth != null) {
