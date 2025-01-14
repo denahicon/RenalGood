@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
-import com.example.renalgood.Nutriologo.CitasActivity;
+import com.example.renalgood.CitasNutriologo.CitasActivity;
 import com.example.renalgood.Nutriologo.NutriologoActivity;
 import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;

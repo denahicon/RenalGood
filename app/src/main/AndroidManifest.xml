@@ -39,7 +39,7 @@
             android:name=".mensaje.MensajeDetalleActivity"
             android:exported="false" />
         <activity
-            android:name=".Nutriologo.CitasActivity"
+            android:name=".CitasNutriologo.CitasActivity"
             android:exported="false" />
         <activity
             android:name=".recetas.RecetaDetalleActivity"
