@@ -39,10 +39,11 @@ public class MensajeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setBackgroundDrawableResource(android.R.color.white);
         setContentView(R.layout.activity_mensajes);
 
         mDatabase = FirebaseDatabase.getInstance("https://ya-basta-default-rtdb.firebaseio.com/").getReference();
-        nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Obtener el ID del nutriólogo autenticado
+        nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         initializeViews();
         setupFirebase();
@@ -93,27 +94,6 @@ public class MensajeActivity extends AppCompatActivity {
                         Log.w("MensajeActivity", "Error obteniendo mensajes.", databaseError.toException());
                     }
                 });
-    }
-
-    private void actualizarUIConMensajes(List<Mensaje> mensajes) {
-        List<MensajeList> mensajeListItems = new ArrayList<>();
-        for (Mensaje mensaje : mensajes) {
-            mensajeListItems.add(convertToMensajeList(mensaje));
-        }
-
-        mensajeAdapter.updateList(mensajeListItems);
-
-        Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajes.size() + " elementos");
-    }
-
-    private MensajeList convertToMensajeList(Mensaje mensaje) {
-        String pacienteId = mensaje.getSenderId(); // Asumimos que senderId es el pacienteId
-        String nombre = ""; // Aquí deberías obtener el nombre del paciente
-        String profilePic = ""; // Aquí deberías obtener la imagen de perfil del paciente
-        String ultimoMensaje = mensaje.getMessage();
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(mensaje.getTimestamp()));
-
-        return new MensajeList(pacienteId, nombre, ultimoMensaje, hora, profilePic);
     }
 
     private void debugDatabase() {
@@ -225,9 +205,9 @@ public class MensajeActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        List<MensajeList> mensajeList = new ArrayList<>();
+        mensajeList = new ArrayList<>();
 
-        mensajeAdapter = new MensajeListAdapter(mensajeList, mensaje -> {
+        mensajeAdapter = new MensajeListAdapter(new ArrayList<>(), mensaje -> {
             Intent intent = new Intent(this, MensajeDetalleActivity.class);
             intent.putExtra("pacienteId", mensaje.getPacienteId());
             intent.putExtra("nombrePaciente", mensaje.getNombre());
@@ -236,6 +216,27 @@ public class MensajeActivity extends AppCompatActivity {
 
         rvMensajes.setLayoutManager(new LinearLayoutManager(this));
         rvMensajes.setAdapter(mensajeAdapter);
+    }
+
+    private void actualizarUIConMensajes(List<Mensaje> mensajes) {
+        List<MensajeList> mensajeListItems = new ArrayList<>();
+        for (Mensaje mensaje : mensajes) {
+            mensajeListItems.add(convertToMensajeList(mensaje));
+        }
+
+        mensajeAdapter.updateList(mensajeListItems);
+
+        Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajes.size() + " elementos");
+    }
+
+    private MensajeList convertToMensajeList(Mensaje mensaje) {
+        String pacienteId = mensaje.getSenderId(); // Asumimos que senderId es el pacienteId
+        String nombre = "Nombre del Paciente"; // Aquí deberías obtener el nombre del paciente
+        String profilePic = ""; // Aquí deberías obtener la imagen de perfil del paciente
+        String ultimoMensaje = mensaje.getMessage();
+        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(mensaje.getTimestamp()));
+
+        return new MensajeList(pacienteId, nombre, ultimoMensaje, hora, profilePic);
     }
 
     private String getChatId(String nutriologoId, String pacienteId) {
