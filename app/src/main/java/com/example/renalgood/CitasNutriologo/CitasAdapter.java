@@ -7,24 +7,21 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.renalgood.R;
-
+import com.google.firebase.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
 public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHolder> {
-    private List<Cita> citas;
-    private CitaClickListener listener;
-    private SimpleDateFormat dateFormat;
+    private List<CitaModel> citasList;
+    private final CitaClickListener listener;
+    private final SimpleDateFormat dateFormat;
 
-    public interface CitaClickListener {
-        void onAceptarClick(Cita cita);
-        void onRechazarClick(Cita cita);
-    }
-
-    public CitasAdapter(List<Cita> citas, CitaClickListener listener) {
-        this.citas = citas;
+    public CitasAdapter(CitaClickListener listener) {
+        this.citasList = new ArrayList<>();
         this.listener = listener;
         this.dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     }
@@ -39,26 +36,26 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
 
     @Override
     public void onBindViewHolder(@NonNull CitaViewHolder holder, int position) {
-        Cita cita = citas.get(position);
+        CitaModel cita = citasList.get(position);
         holder.bind(cita);
     }
 
     @Override
     public int getItemCount() {
-        return citas.size();
+        return citasList.size();
     }
 
-    public void updateCitas(List<Cita> newCitas) {
-        this.citas = newCitas;
+    public void updateList(List<CitaModel> newList) {
+        this.citasList = newList;
         notifyDataSetChanged();
     }
 
     class CitaViewHolder extends RecyclerView.ViewHolder {
-        private TextView tvNombrePaciente;
-        private TextView tvFechaCita;
-        private TextView tvHoraCita;
-        private Button btnAceptar;
-        private Button btnRechazar;
+        private final TextView tvNombrePaciente;
+        private final TextView tvFechaCita;
+        private final TextView tvHoraCita;
+        private final Button btnAceptar;
+        private final Button btnRechazar;
 
         CitaViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -69,12 +66,18 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
             btnRechazar = itemView.findViewById(R.id.btnRechazar);
         }
 
-        void bind(final Cita cita) {
+        void bind(final CitaModel cita) {
             tvNombrePaciente.setText(cita.getPacienteNombre());
-            tvFechaCita.setText(dateFormat.format(cita.getFecha()));
+
+            // Manejo seguro de la fecha
+            if (cita.getFecha() != null) {
+                tvFechaCita.setText(dateFormat.format(cita.getFecha()));
+            } else {
+                tvFechaCita.setText("Fecha no disponible");
+            }
+
             tvHoraCita.setText(cita.getHora());
 
-            // Configuración de visibilidad y clicks de botones según estado
             if ("pendiente".equals(cita.getEstado())) {
                 btnAceptar.setVisibility(View.VISIBLE);
                 btnRechazar.setVisibility(View.VISIBLE);
@@ -95,5 +98,10 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
                 btnRechazar.setVisibility(View.GONE);
             }
         }
+    }
+
+    public interface CitaClickListener {
+        void onAceptarClick(CitaModel cita);
+        void onRechazarClick(CitaModel cita);
     }
 }

@@ -8,6 +8,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Button;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.renalgood.Chat.ChatActivity;
@@ -19,7 +21,12 @@ import com.example.renalgood.recetas.RecetasActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import android.content.Intent;
+import android.widget.Toast;
 
 public class CalendarioActivity extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -61,6 +68,9 @@ public class CalendarioActivity extends AppCompatActivity {
 
         // Configurar navegación
         setupNavigationListeners();
+    }
+
+    private void agendarCita() {
     }
 
     private void initViews() {
@@ -113,40 +123,46 @@ public class CalendarioActivity extends AppCompatActivity {
         calendarioLayout.setVisibility(View.GONE);
     }
 
-    private void agendarCita() {
-        // Obtener fecha seleccionada del CalendarView
-        long fechaSeleccionada = calendarView.getDate();
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(fechaSeleccionada);
+    private void agendarCita(String nutriologoId, Date fechaSeleccionada, String horaSeleccionada) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        String pacienteId = auth.getCurrentUser().getUid();
 
-        // Obtener hora seleccionada del TimePicker
-        int hora = timePicker.getHour();
-        int minuto = timePicker.getMinute();
+        // Obtener el nombre del paciente
+        db.collection("users").document(pacienteId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String pacienteNombre = documentSnapshot.getString("nombre");
+                    if (pacienteNombre == null) pacienteNombre = "Paciente";
 
-        // Establecer la hora en el calendario
-        calendar.set(Calendar.HOUR_OF_DAY, hora);
-        calendar.set(Calendar.MINUTE, minuto);
+                    Map<String, Object> cita = new HashMap<>();
+                    cita.put("nutriologoId", nutriologoId);
+                    cita.put("pacienteId", pacienteId);
+                    cita.put("pacienteNombre", pacienteNombre);
+                    cita.put("fecha", fechaSeleccionada);  // La fecha como Date
+                    cita.put("hora", horaSeleccionada);
+                    cita.put("estado", "pendiente");
 
-        // Crear objeto de cita
-        CitaModel cita = new CitaModel(
-                userId,
-                nutriologoId,
-                calendar.getTimeInMillis(),
-                "pendiente" // Estado inicial de la cita
-        );
-
-        // Guardar cita en Firestore
-        db.collection("citas")
-                .add(cita)
-                .addOnSuccessListener(documentReference -> {
-                    // Programar notificación 2 horas antes
-                    programarNotificacion(calendar.getTimeInMillis());
-                    // Mostrar mensaje de éxito
-                    mostrarMensajeExito();
+                    db.collection("citas")
+                            .add(cita)
+                            .addOnSuccessListener(documentReference -> {
+                                // Mostrar mensaje de éxito
+                                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                                builder.setTitle("Cita Agendada")
+                                        .setMessage("Tu solicitud de cita ha sido enviada al nutriólogo. " +
+                                                "Recibirás una notificación cuando sea confirmada.")
+                                        .setPositiveButton("OK", (dialog, which) -> {
+                                            dialog.dismiss();
+                                            finish();  // Cerrar la actividad después de agendar
+                                        })
+                                        .show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Error al agendar la cita: " + e.getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    // Manejar error
-                    mostrarMensajeError();
+                    Toast.makeText(this, "Error al obtener datos del paciente: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 });
     }
 

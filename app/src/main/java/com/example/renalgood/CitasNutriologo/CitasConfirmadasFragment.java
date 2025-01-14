@@ -6,22 +6,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.renalgood.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class CitasConfirmadasFragment extends Fragment {
+public class CitasConfirmadasFragment extends Fragment implements CitasAdapter.CitaClickListener {
     private RecyclerView recyclerView;
     private CitasAdapter citasAdapter;
     private FirebaseFirestore db;
@@ -49,8 +46,8 @@ public class CitasConfirmadasFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        // Para citas confirmadas, pasamos null como listener ya que no necesitamos botones
-        citasAdapter = new CitasAdapter(new ArrayList<>(), null);
+        // Pasamos this como el CitaClickListener, aunque no usaremos los clicks en citas confirmadas
+        citasAdapter = new CitasAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(citasAdapter);
     }
@@ -67,13 +64,27 @@ public class CitasConfirmadasFragment extends Fragment {
                         return;
                     }
 
-                    List<Cita> citas = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : value) {
-                        Cita cita = doc.toObject(Cita.class);
-                        citas.add(cita);
+                    List<CitaModel> citas = new ArrayList<>();
+                    if (value != null) {
+                        for (QueryDocumentSnapshot doc : value) {
+                            CitaModel cita = new CitaModel();
+                            cita.setId(doc.getId());
+                            cita.setNutriologoId(doc.getString("nutriologoId"));
+                            cita.setPacienteId(doc.getString("pacienteId"));
+                            cita.setPacienteNombre(doc.getString("pacienteNombre"));
+                            cita.setHora(doc.getString("hora"));
+                            cita.setEstado(doc.getString("estado"));
+
+                            // Manejo seguro de la fecha
+                            if (doc.getTimestamp("fecha") != null) {
+                                cita.setFecha(doc.getTimestamp("fecha").toDate());
+                            }
+
+                            citas.add(cita);
+                        }
                     }
 
-                    citasAdapter.updateCitas(citas);
+                    citasAdapter.updateList(citas);
                     updateEmptyView(citas.isEmpty());
                 });
     }
@@ -81,5 +92,16 @@ public class CitasConfirmadasFragment extends Fragment {
     private void updateEmptyView(boolean isEmpty) {
         tvEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+
+    // Implementamos los métodos requeridos del CitaClickListener, aunque no los usaremos
+    @Override
+    public void onAceptarClick(CitaModel cita) {
+        // No se necesita implementación para citas confirmadas
+    }
+
+    @Override
+    public void onRechazarClick(CitaModel cita) {
+        // No se necesita implementación para citas confirmadas
     }
 }
