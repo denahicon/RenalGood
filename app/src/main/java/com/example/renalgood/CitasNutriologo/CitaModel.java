@@ -11,13 +11,24 @@ public class CitaModel {
     private Date fecha;
     private String hora;
     private String estado;
-    private long timestamp;  // Añadido para manejar el timestamp de Firestore
 
     public CitaModel() {
         // Constructor vacío requerido para Firestore
     }
 
-    // Getters y Setters normales
+    // Constructor completo
+    public CitaModel(String id, String nutriologoId, String pacienteId,
+                     String pacienteNombre, Date fecha, String hora, String estado) {
+        this.id = id;
+        this.nutriologoId = nutriologoId;
+        this.pacienteId = pacienteId;
+        this.pacienteNombre = pacienteNombre;
+        this.fecha = fecha;
+        this.hora = hora;
+        this.estado = estado;
+    }
+
+    // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -27,31 +38,22 @@ public class CitaModel {
     public String getPacienteId() { return pacienteId; }
     public void setPacienteId(String pacienteId) { this.pacienteId = pacienteId; }
 
-    public String getPacienteNombre() { return pacienteNombre; }
+    public String getPacienteNombre() { return pacienteNombre != null ? pacienteNombre : "Paciente"; }
     public void setPacienteNombre(String pacienteNombre) { this.pacienteNombre = pacienteNombre; }
 
-    public Date getFecha() {
-        // Si no hay fecha pero hay timestamp, crear la fecha del timestamp
-        if (fecha == null && timestamp != 0) {
-            return new Date(timestamp);
-        }
-        return fecha;
-    }
-
+    public Date getFecha() { return fecha; }
     public void setFecha(Date fecha) { this.fecha = fecha; }
 
-    public String getHora() { return hora != null ? hora : "No especificada"; }
-    public void setHora(String hora) { this.hora = hora; }
-
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
-
-    public long getTimestamp() { return timestamp; }
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-        // Actualizar también la fecha si no está establecida
-        if (this.fecha == null && timestamp != 0) {
-            this.fecha = new Date(timestamp);
+    // Método especial para manejar el timestamp de Firestore
+    public void setFecha(Timestamp timestamp) {
+        if (timestamp != null) {
+            this.fecha = timestamp.toDate();
         }
     }
+
+    public String getHora() { return hora != null ? hora : "Hora no especificada"; }
+    public void setHora(String hora) { this.hora = hora; }
+
+    public String getEstado() { return estado != null ? estado : "pendiente"; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

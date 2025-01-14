@@ -8,10 +8,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
-import com.google.firebase.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,6 +17,11 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
     private List<CitaModel> citasList;
     private final CitaClickListener listener;
     private final SimpleDateFormat dateFormat;
+
+    public interface CitaClickListener {
+        void onAceptarClick(CitaModel cita);
+        void onRechazarClick(CitaModel cita);
+    }
 
     public CitasAdapter(CitaClickListener listener) {
         this.citasList = new ArrayList<>();
@@ -67,41 +70,32 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
         }
 
         void bind(final CitaModel cita) {
-            tvNombrePaciente.setText(cita.getPacienteNombre());
+            tvNombrePaciente.setText(String.format("Paciente: %s", cita.getPacienteNombre()));
 
-            // Manejo seguro de la fecha
             if (cita.getFecha() != null) {
-                tvFechaCita.setText(dateFormat.format(cita.getFecha()));
+                tvFechaCita.setText(String.format("Fecha: %s", dateFormat.format(cita.getFecha())));
             } else {
-                tvFechaCita.setText("Fecha no disponible");
+                tvFechaCita.setText("Fecha: No disponible");
             }
 
-            tvHoraCita.setText(cita.getHora());
+            tvHoraCita.setText(String.format("Hora: %s", cita.getHora()));
 
+            // Solo mostrar botones si la cita está pendiente
             if ("pendiente".equals(cita.getEstado())) {
                 btnAceptar.setVisibility(View.VISIBLE);
                 btnRechazar.setVisibility(View.VISIBLE);
 
                 btnAceptar.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onAceptarClick(cita);
-                    }
+                    if (listener != null) listener.onAceptarClick(cita);
                 });
 
                 btnRechazar.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onRechazarClick(cita);
-                    }
+                    if (listener != null) listener.onRechazarClick(cita);
                 });
             } else {
                 btnAceptar.setVisibility(View.GONE);
                 btnRechazar.setVisibility(View.GONE);
             }
         }
-    }
-
-    public interface CitaClickListener {
-        void onAceptarClick(CitaModel cita);
-        void onRechazarClick(CitaModel cita);
     }
 }

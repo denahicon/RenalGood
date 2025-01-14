@@ -1,5 +1,6 @@
 package com.example.renalgood.CitasNutriologo;
 
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,6 +20,7 @@ import com.google.firebase.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class CitasPendientesFragment extends Fragment implements CitasAdapter.CitaClickListener {
     private RecyclerView recyclerView;
@@ -55,6 +57,7 @@ public class CitasPendientesFragment extends Fragment implements CitasAdapter.Ci
 
     private void cargarCitasPendientes() {
         String nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
         db.collection("citas")
                 .whereEqualTo("nutriologoId", nutriologoId)
@@ -68,32 +71,34 @@ public class CitasPendientesFragment extends Fragment implements CitasAdapter.Ci
                     List<CitaModel> citas = new ArrayList<>();
                     if (value != null) {
                         for (QueryDocumentSnapshot doc : value) {
-                            CitaModel cita = new CitaModel();
-                            cita.setId(doc.getId());
-                            cita.setNutriologoId(doc.getString("nutriologoId"));
-                            cita.setPacienteId(doc.getString("pacienteId"));
-                            cita.setPacienteNombre(doc.getString("pacienteNombre"));
-                            cita.setHora(doc.getString("hora"));
-                            cita.setEstado(doc.getString("estado"));
+                            try {
+                                CitaModel cita = new CitaModel();
+                                cita.setId(doc.getId());
+                                cita.setNutriologoId(doc.getString("nutriologoId"));
+                                cita.setPacienteId(doc.getString("pacienteId"));
+                                cita.setPacienteNombre(doc.getString("pacienteNombre"));
 
-                            // Manejar la fecha/timestamp
-                            if (doc.getTimestamp("fecha") != null) {
-                                cita.setFecha(doc.getTimestamp("fecha").toDate());
-                            } else if (doc.contains("timestamp")) {
-                                Object timestampObj = doc.get("timestamp");
-                                if (timestampObj instanceof Long) {
-                                    cita.setTimestamp((Long) timestampObj);
+                                // Manejar la fecha
+                                Timestamp timestamp = doc.getTimestamp("fecha");
+                                if (timestamp != null) {
+                                    cita.setFecha(timestamp.toDate());
                                 }
+
+                                cita.setHora(doc.getString("hora"));
+                                cita.setEstado(doc.getString("estado"));
+
+                                // Log para debugging
+                                String fechaStr = cita.getFecha() != null ? dateFormat.format(cita.getFecha()) : "null";
+                                Log.d("CitasPendientes", "Cita cargada - " +
+                                        "ID: " + cita.getId() +
+                                        ", Paciente: " + cita.getPacienteNombre() +
+                                        ", Fecha: " + fechaStr +
+                                        ", Hora: " + cita.getHora());
+
+                                citas.add(cita);
+                            } catch (Exception e) {
+                                Log.e("CitasPendientes", "Error procesando cita: " + doc.getId(), e);
                             }
-
-                            // Log para debugging
-                            Log.d("CitasPendientes", "Cita cargada: " +
-                                    "ID=" + cita.getId() +
-                                    ", Paciente=" + cita.getPacienteNombre() +
-                                    ", Fecha=" + cita.getFecha() +
-                                    ", Hora=" + cita.getHora());
-
-                            citas.add(cita);
                         }
                     }
 
@@ -136,6 +141,5 @@ public class CitasPendientesFragment extends Fragment implements CitasAdapter.Ci
     }
 
     private void notificarPaciente(String pacienteId, String titulo, String mensaje) {
-        // Implementar la lógica de notificaciones
     }
 }

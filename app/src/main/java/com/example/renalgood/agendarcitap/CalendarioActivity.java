@@ -1,5 +1,6 @@
 package com.example.renalgood.agendarcitap;
 
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CalendarView;
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import android.content.Intent;
@@ -45,32 +47,66 @@ public class CalendarioActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calendario);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         userId = mAuth.getCurrentUser().getUid();
-
-        // Inicializar vistas
         initViews();
-
-        // Configurar TimePicker para formato 24 horas
         timePicker.setIs24HourView(true);
-
         verificarVinculacionNutriologo();
-
-        // Configurar listener del botón agendar
         btnAgendar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 agendarCita();
             }
         });
-
-        // Configurar navegación
         setupNavigationListeners();
     }
 
     private void agendarCita() {
+        if (nutriologoId == null || nutriologoId.isEmpty()) {
+            Toast.makeText(this, "Error: No hay nutriólogo vinculado", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Date fechaSeleccionada = new Date(calendarView.getDate());
+
+        int hora = timePicker.getHour();
+        int minuto = timePicker.getMinute();
+        String horaSeleccionada = String.format(Locale.getDefault(), "%02d:%02d", hora, minuto);
+
+        Date hoy = new Date();
+        if (fechaSeleccionada.before(hoy) && !esHoy(fechaSeleccionada)) {
+            Toast.makeText(this, "Por favor selecciona una fecha futura", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        AlertDialog.Builder confirmDialog = new AlertDialog.Builder(this);
+        confirmDialog.setTitle("Confirmar Cita");
+        confirmDialog.setMessage("¿Deseas agendar una cita para el día " +
+                formatearFecha(fechaSeleccionada) +
+                " a las " + horaSeleccionada + "?");
+
+        confirmDialog.setPositiveButton("Confirmar", (dialog, which) -> {
+            agendarCita(nutriologoId, fechaSeleccionada, horaSeleccionada);
+        });
+
+        confirmDialog.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
+        confirmDialog.show();
+    }
+
+    private boolean esHoy(Date fecha) {
+        Calendar cal1 = Calendar.getInstance();
+        Calendar cal2 = Calendar.getInstance();
+        cal1.setTime(fecha);
+        cal2.setTime(new Date());
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+                cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH);
+    }
+
+    private String formatearFecha(Date fecha) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        return sdf.format(fecha);
     }
 
     private void initViews() {
@@ -79,8 +115,6 @@ public class CalendarioActivity extends AppCompatActivity {
         calendarView = findViewById(R.id.calendarView);
         timePicker = findViewById(R.id.timePicker);
         btnAgendar = findViewById(R.id.btnAgendar);
-
-        // Inicializar vistas de navegación
         ivHome = findViewById(R.id.ivHome);
         ivLupa = findViewById(R.id.ivLupa);
         ivChef = findViewById(R.id.ivChef);
@@ -97,10 +131,8 @@ public class CalendarioActivity extends AppCompatActivity {
                     if (documentSnapshot.exists() && documentSnapshot.contains("nutriologoId")) {
                         nutriologoId = documentSnapshot.getString("nutriologoId");
                         if (nutriologoId != null && !nutriologoId.isEmpty()) {
-                            // Paciente vinculado - mostrar calendario
                             mostrarCalendario();
                         } else {
-                            // Paciente no vinculado - mostrar mensaje
                             mostrarMensajeNoVinculado();
                         }
                     } else {
@@ -108,7 +140,6 @@ public class CalendarioActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Manejar error
                     mostrarMensajeNoVinculado();
                 });
     }
@@ -126,8 +157,6 @@ public class CalendarioActivity extends AppCompatActivity {
     private void agendarCita(String nutriologoId, Date fechaSeleccionada, String horaSeleccionada) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         String pacienteId = auth.getCurrentUser().getUid();
-
-        // Obtener el nombre del paciente
         db.collection("users").document(pacienteId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     String pacienteNombre = documentSnapshot.getString("nombre");
@@ -137,21 +166,20 @@ public class CalendarioActivity extends AppCompatActivity {
                     cita.put("nutriologoId", nutriologoId);
                     cita.put("pacienteId", pacienteId);
                     cita.put("pacienteNombre", pacienteNombre);
-                    cita.put("fecha", fechaSeleccionada);  // La fecha como Date
+                    cita.put("fecha", fechaSeleccionada);
                     cita.put("hora", horaSeleccionada);
                     cita.put("estado", "pendiente");
 
                     db.collection("citas")
                             .add(cita)
                             .addOnSuccessListener(documentReference -> {
-                                // Mostrar mensaje de éxito
                                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                                 builder.setTitle("Cita Agendada")
                                         .setMessage("Tu solicitud de cita ha sido enviada al nutriólogo. " +
                                                 "Recibirás una notificación cuando sea confirmada.")
                                         .setPositiveButton("OK", (dialog, which) -> {
                                             dialog.dismiss();
-                                            finish();  // Cerrar la actividad después de agendar
+                                            finish();
                                         })
                                         .show();
                             })
@@ -164,19 +192,6 @@ public class CalendarioActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error al obtener datos del paciente: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });
-    }
-
-    private void programarNotificacion(long timestampCita) {
-        // Aquí implementarías la lógica para programar la notificación
-        // 2 horas antes de la cita usando WorkManager o AlarmManager
-    }
-
-    private void mostrarMensajeExito() {
-        // Implementar mostrar mensaje de éxito
-    }
-
-    private void mostrarMensajeError() {
-        // Implementar mostrar mensaje de error
     }
 
     private void setupNavigationListeners() {
