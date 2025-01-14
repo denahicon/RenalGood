@@ -88,7 +88,9 @@ public class NutriologoActivity extends AppCompatActivity {
     }
 
     private void setupNavigationListeners() {
-        ivHome.setOnClickListener(view -> highlightCurrentIcon(ivHome));
+        ivHome.setImageResource(R.drawable.ic_home);
+        ivHome.setColorFilter(getResources().getColor(R.color.teal_700));
+
         ivMensaje.setOnClickListener(view -> {
             navigateToActivity(MensajeActivity.class);
             highlightCurrentIcon(ivMensaje);

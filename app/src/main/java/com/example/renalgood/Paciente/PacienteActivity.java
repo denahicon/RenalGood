@@ -179,7 +179,6 @@ public class PacienteActivity extends AppCompatActivity {
         ivHome.setImageResource(R.drawable.ic_home);
         ivHome.setColorFilter(getResources().getColor(R.color.pink_strong));
 
-
         ivLupa.setOnClickListener(v -> {
             Intent intent = new Intent(this, ListadeAlimentosActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

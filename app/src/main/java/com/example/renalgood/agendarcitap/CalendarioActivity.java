@@ -1,9 +1,11 @@
 package com.example.renalgood.agendarcitap;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.CalendarView;
@@ -28,6 +30,8 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -51,6 +55,7 @@ public class CalendarioActivity extends AppCompatActivity {
     private CardView cardEstadoCita;
     private TextView tvFechaHoraCita;
     private TextView tvEstadoCita;
+    private Button btnCancelarCita;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +77,8 @@ public class CalendarioActivity extends AppCompatActivity {
         setupNavigationListeners();
         verificarVinculacionNutriologo();
         verificarCitaExistente();
+        btnCancelarCita = findViewById(R.id.btnCancelarCita);
+        btnCancelarCita.setOnClickListener(v -> mostrarDialogoCancelar());
     }
 
     private void agendarCita() {
@@ -192,52 +199,159 @@ public class CalendarioActivity extends AppCompatActivity {
                 return;
             }
 
-            Date fecha = timestamp.toDate();
-            String fechaFormateada = formatearFecha(fecha);
-            tvFechaHoraCita.setText("Fecha: " + fechaFormateada + "\nHora: " + hora);
-            cardEstadoCita.setVisibility(View.VISIBLE);
+            runOnUiThread(() -> {
+                cardEstadoCita.setVisibility(View.VISIBLE);
 
-            String mensaje;
-            GradientDrawable drawable = new GradientDrawable();
-            drawable.setCornerRadius(getResources().getDimensionPixelSize(R.dimen.corner_radius));
+                Date fecha = timestamp.toDate();
+                String fechaFormateada = formatearFecha(fecha);
+                tvFechaHoraCita.setText("Fecha: " + fechaFormateada + "\nHora: " + hora);
 
-            // Configurar el mensaje y color según el estado
-            switch (estado.toLowerCase()) {
-                case "confirmada":
-                    mensaje = "¡Tu cita ha sido confirmada!";
-                    drawable.setColor(ContextCompat.getColor(this, R.color.green));
-                    break;
-                case "rechazada":
-                    mensaje = "Tu cita ha sido rechazada";
-                    drawable.setColor(ContextCompat.getColor(this, R.color.red));
-                    break;
-                default:
-                    mensaje = "Tu cita está pendiente de confirmación";
-                    drawable.setColor(ContextCompat.getColor(this, R.color.orange));
-                    break;
-            }
+                // Verificar si la cita ya pasó
+                if (estado.equals("confirmada") && hayCitaPasada(fecha, hora)) {
+                    eliminarCitaPasada(doc.getId());
+                    return;
+                }
 
-            // Actualizar el texto y el fondo
-            tvEstadoCita.setText(mensaje);
-            tvEstadoCita.setTextColor(Color.WHITE);
-            View estadoContainer = findViewById(R.id.estadoContainer);
-            estadoContainer.setBackground(drawable);
+                String mensaje;
+                int colorFondo;
 
-            Log.d("CalendarioActivity", "Estado actualizado: " + estado +
-                    ", Mensaje: " + mensaje);
+                switch (estado.toLowerCase()) {
+                    case "confirmada":
+                        mensaje = "¡Tu cita está confirmada!\nFecha: " + fechaFormateada +
+                                "\nHora: " + hora +
+                                "\n¿Necesitas cancelarla?";
+                        colorFondo = ContextCompat.getColor(this, R.color.green);
+                        mostrarOpcionCancelar();
+                        deshabilitarControles();
+                        break;
+                    case "rechazada":
+                        mensaje = "Tu cita ha sido rechazada\nPuedes agendar una nueva cita";
+                        colorFondo = ContextCompat.getColor(this, R.color.red);
+                        habilitarControlesParaNuevaCita();
+                        new Handler().postDelayed(() -> eliminarCitaRechazada(doc.getId()), 5000);
+                        break;
+                    default:
+                        mensaje = "Tu cita está pendiente de confirmación";
+                        colorFondo = ContextCompat.getColor(this, R.color.orange);
+                        deshabilitarControles();
+                        break;
+                }
+
+                cardEstadoCita.setCardBackgroundColor(colorFondo);
+                tvEstadoCita.setText(mensaje);
+                tvEstadoCita.setTextColor(Color.WHITE);
+            });
 
         } catch (Exception e) {
             Log.e("CalendarioActivity", "Error al mostrar estado de cita", e);
         }
     }
 
+    private boolean hayCitaPasada(Date fecha, String hora) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            Date horaDate = sdf.parse(hora);
+            Calendar calendarCita = Calendar.getInstance();
+            Calendar calendarActual = Calendar.getInstance();
+
+            calendarCita.setTime(fecha);
+            calendarCita.set(Calendar.HOUR_OF_DAY, horaDate.getHours());
+            calendarCita.set(Calendar.MINUTE, horaDate.getMinutes());
+
+            return calendarCita.before(calendarActual);
+        } catch (ParseException e) {
+            Log.e("CalendarioActivity", "Error al parsear hora", e);
+            return false;
+        }
+    }
+
+    private void mostrarOpcionCancelar() {
+        Button btnCancelar = new Button(this);
+        btnCancelar.setText("Cancelar Cita");
+        btnCancelar.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.red)));
+        btnCancelar.setTextColor(Color.WHITE);
+
+        LinearLayout contenedor = findViewById(R.id.calendarioLayout);
+        contenedor.addView(btnCancelar);
+
+        btnCancelar.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Cancelar Cita")
+                    .setMessage("¿Estás seguro de que deseas cancelar tu cita? Esta acción no se puede deshacer.")
+                    .setPositiveButton("Sí, cancelar", (dialog, which) -> cancelarCita())
+                    .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                    .show();
+        });
+    }
+
+    private void cancelarCita() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        db.collection("citas")
+                .whereEqualTo("pacienteId", userId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        document.getReference().delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "Cita cancelada exitosamente",
+                                            Toast.LENGTH_SHORT).show();
+                                    cardEstadoCita.setVisibility(View.GONE);
+                                    btnCancelarCita.setVisibility(View.GONE);
+                                    habilitarControlesParaNuevaCita();
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Error al cancelar la cita",
+                                                Toast.LENGTH_SHORT).show()
+                                );
+                    }
+                });
+    }
+
+    private void eliminarCitaPasada(String citaId) {
+        db.collection("citas")
+                .document(citaId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    cardEstadoCita.setVisibility(View.GONE);
+                    habilitarControlesParaNuevaCita();
+                    Toast.makeText(this, "Tu cita anterior ha finalizado. Puedes agendar una nueva.",
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void habilitarControlesParaNuevaCita() {
+        calendarView.setEnabled(true);
+        timePicker.setEnabled(true);
+        btnAgendar.setEnabled(true);
+        btnAgendar.setText("Agendar Nueva Cita");
+    }
+
+    private void eliminarCitaRechazada(String citaId) {
+        db.collection("citas")
+                .document(citaId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    cardEstadoCita.setVisibility(View.GONE);
+                    Log.d("CalendarioActivity", "Cita rechazada eliminada correctamente");
+                })
+                .addOnFailureListener(e -> Log.e("CalendarioActivity", "Error al eliminar cita rechazada", e));
+    }
+
     private void deshabilitarControles() {
-        // Deshabilitar controles
         calendarView.setEnabled(false);
         timePicker.setEnabled(false);
         btnAgendar.setEnabled(false);
-        btnAgendar.setAlpha(0.5f); // Hacerlo visualmente deshabilitado
         btnAgendar.setText("Ya tienes una cita programada");
+    }
+
+    private void mostrarDialogoCancelar() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Cancelar Cita")
+                .setMessage("¿Estás seguro de que deseas cancelar tu cita? Esta acción no se puede deshacer.")
+                .setPositiveButton("Sí, cancelar", (dialog, which) -> cancelarCita())
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     private void habilitarControles() {

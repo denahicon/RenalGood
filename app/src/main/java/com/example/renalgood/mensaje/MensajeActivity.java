@@ -140,9 +140,8 @@ public class MensajeActivity extends AppCompatActivity {
             highlightCurrentIcon(ivHome);
         });
 
-        ivMensaje.setOnClickListener(view -> {
-            highlightCurrentIcon(ivMensaje);
-        });
+        ivMensaje.setImageResource(R.drawable.ic_email);
+        ivMensaje.setColorFilter(getResources().getColor(R.color.teal_700));
 
         ivCalendario.setOnClickListener(view -> {
             navigateToActivity(CitasActivity.class);
