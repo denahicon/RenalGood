@@ -37,24 +37,23 @@ public class NutriologosAdapter extends RecyclerView.Adapter<NutriologosAdapter.
     public void onBindViewHolder(@NonNull NutriologoViewHolder holder, int position) {
         Nutriologo nutriologo = nutriologos.get(position);
 
-        // Configurar los datos en las vistas
         holder.nombreTextView.setText(nutriologo.getNombre());
         holder.especialidadTextView.setText(nutriologo.getAreaEspecializacion());
         holder.experienciaTextView.setText("Experiencia: " + nutriologo.getAnosExperiencia() + " años");
         holder.direccionTextView.setText(nutriologo.getDireccionClinica());
 
-        // Cargar la imagen del nutriólogo si existe
-        if (nutriologo.getPhotoUrl() != null && !nutriologo.getPhotoUrl().isEmpty()) {
+        // Modificar esta parte para usar selfieUrl en lugar de photoUrl
+        if (nutriologo.getSelfieUrl() != null && !nutriologo.getSelfieUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())
-                    .load(nutriologo.getPhotoUrl())
+                    .load(nutriologo.getSelfieUrl())
+                    .placeholder(R.drawable.default_profile) // Usar un placeholder más adecuado
+                    .error(R.drawable.default_profile)
                     .circleCrop()
-                    .placeholder(android.R.drawable.ic_menu_camera)
                     .into(holder.profileImageView);
         } else {
-            holder.profileImageView.setImageResource(android.R.drawable.ic_menu_camera);
+            holder.profileImageView.setImageResource(R.drawable.default_profile);
         }
 
-        // Configurar el clic en el item para abrir NutriologoProfileActivity
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onNutriologoClick(nutriologo);

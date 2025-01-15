@@ -7,9 +7,8 @@ public class Nutriologo {
     private String anosExperiencia;
     private String direccionClinica;
     private String correo;
-    private String photoUrl;
+    private String selfieUrl;
 
-    // Constructor vacío necesario para Firestore
     public Nutriologo() {}
 
     public Nutriologo(String id, String nombre, String areaEspecializacion,
@@ -21,10 +20,9 @@ public class Nutriologo {
         this.anosExperiencia = anosExperiencia;
         this.direccionClinica = direccionClinica;
         this.correo = correo;
-        this.photoUrl = photoUrl;
+        this.selfieUrl = photoUrl;
     }
 
-    // Getters y Setters
     public String getId() {
         return id;
     }
@@ -73,11 +71,7 @@ public class Nutriologo {
         this.correo = correo;
     }
 
-    public String getPhotoUrl() {
-        return photoUrl;
-    }
+    public String getSelfieUrl() { return selfieUrl; }
 
-    public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
-    }
+    public void setSelfieUrl(String selfieUrl) { this.selfieUrl = selfieUrl; }
 }

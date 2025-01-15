@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#d3d3d3">
 
-    <!-- Header del Chat -->
     <LinearLayout
         android:id="@+id/chatHeader"
         android:layout_width="match_parent"
@@ -13,13 +12,15 @@
         android:layout_alignParentTop="true"
         android:background="@color/white"
         android:elevation="4dp"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/profileImage"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@drawable/default_profile" />
+            android:src="@drawable/default_profile"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -30,19 +31,11 @@
 
             <TextView
                 android:id="@+id/nutriologoName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
-            <TextView
-                android:id="@+id/onlineStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="En línea"
-                android:textSize="12sp"
-                android:textColor="#4CAF50" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
         </LinearLayout>
 
         <ImageButton
@@ -60,7 +53,6 @@
         android:layout_above="@+id/navigationBar"
         android:orientation="vertical">
 
-        <!-- Contenedor no vinculado -->
         <FrameLayout
             android:id="@+id/noVinculacionContainer"
             android:layout_width="match_parent"
@@ -93,7 +85,6 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- Contenedor del Chat -->
         <LinearLayout
             android:id="@+id/chatContainer"
             android:layout_width="match_parent"
@@ -133,7 +124,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Barra de Navegación -->
     <LinearLayout
         android:id="@+id/navigationBar"
         android:layout_width="match_parent"

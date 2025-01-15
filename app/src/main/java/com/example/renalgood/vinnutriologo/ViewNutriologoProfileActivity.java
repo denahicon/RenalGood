@@ -61,9 +61,9 @@ import java.util.Map;
                             binding.txtExperiencia.setText("Experiencia: " + nutriologo.getAnosExperiencia() + " años");
                             binding.txtDireccion.setText(nutriologo.getDireccionClinica());
 
-                            if (nutriologo.getPhotoUrl() != null && !nutriologo.getPhotoUrl().isEmpty()) {
+                            if (nutriologo.getSelfieUrl() != null && !nutriologo.getSelfieUrl().isEmpty()) {
                                 Glide.with(this)
-                                        .load(nutriologo.getPhotoUrl())
+                                        .load(nutriologo.getSelfieUrl())
                                         .circleCrop()
                                         .into(binding.imgNutriologo);
                             }
