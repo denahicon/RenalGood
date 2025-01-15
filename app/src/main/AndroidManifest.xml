@@ -98,6 +98,10 @@
             android:theme="@style/Theme.RenalGood"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".PacientesVinculados.PacienteDetalleActivity"
+            android:exported="false"
+            android:theme="@style/Theme.RenalGood" />
+        <activity
             android:name=".agendarcitap.CalendarioActivity"
             android:exported="false"
             android:theme="@style/Theme.RenalGood"

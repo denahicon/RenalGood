@@ -1,5 +1,6 @@
 package com.example.renalgood.Nutriologo;
 
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -58,16 +59,20 @@ public class PacientesAdapter extends RecyclerView.Adapter<PacientesAdapter.Paci
         }
 
         public void bind(final PatientData paciente, final OnPacienteClickListener listener) {
-            // Establecer nombre
-            tvNombre.setText(paciente.getName());
+            Log.d("PacientesAdapter", "Binding paciente: " + paciente.getName());
 
-            // Establecer edad
-            tvEdad.setText(String.format("Edad: %d años", paciente.getAge()));
+            if (paciente.getName() != null) {
+                tvNombre.setText(paciente.getName());
+            }
 
-            // Establecer situación clínica
-            tvSituacionClinica.setText(paciente.getClinicalSituation());
+            if (paciente.getAge() > 0) {
+                tvEdad.setText("Edad: " + paciente.getAge() + " años");
+            }
 
-            // Configurar click listener
+            if (paciente.getClinicalSituation() != null) {
+                tvSituacionClinica.setText(paciente.getClinicalSituation());
+            }
+
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onPacienteClick(paciente);

@@ -16,23 +16,20 @@ public class PatientData {
     private String physicalActivity;
     private String daysPerWeek;
     private String gender;
-    private Timestamp registrationDate;  // Fecha de registro
-    private double gfr;         // Tasa de filtración glomerular
-    private String ckdStage;    // Etapa de la enfermedad renal
+    private Timestamp registrationDate;
+    private double gfr;
+    private String ckdStage;
 
-    // Constructor vacío necesario para Firebase
     public PatientData() {
         this.registrationDate = new Timestamp(new Date());
     }
 
-    // Constructor con parámetros básicos
     public PatientData(String name, String email) {
         this();
         this.name = name;
         this.email = email;
     }
 
-    // Getters y Setters existentes
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -84,7 +81,6 @@ public class PatientData {
     public String getCkdStage() { return ckdStage; }
     public void setCkdStage(String ckdStage) { this.ckdStage = ckdStage; }
 
-    // Método para convertir creatinina de String a double
     public double getCreatinineValue() {
         try {
             return Double.parseDouble(creatinine.replaceAll("[^0-9.]", ""));
@@ -93,14 +89,12 @@ public class PatientData {
         }
     }
 
-    // Método para calcular el IMC
     public double getBMI() {
         if (height <= 0) return 0;
         double heightInMeters = height / 100.0;
         return weight / (heightInMeters * heightInMeters);
     }
 
-    // Método para obtener la categoría de IMC
     public String getBMICategory() {
         double bmi = getBMI();
         if (bmi < 18.5) return "Bajo peso";
@@ -109,7 +103,6 @@ public class PatientData {
         return "Obesidad";
     }
 
-    // Método para verificar si los datos esenciales están completos
     public boolean isComplete() {
         return name != null && !name.isEmpty() &&
                 email != null && !email.isEmpty() &&
@@ -132,11 +125,14 @@ public class PatientData {
     }
 
     public String getSituacionClinica() {
+        return clinicalSituation != null ? clinicalSituation : "";
     }
 
     public String getPeso() {
+        return String.format("%.1f", weight);
     }
 
     public String getEstatura() {
+        return String.valueOf(height);
     }
 }

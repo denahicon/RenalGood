@@ -3,7 +3,7 @@ package com.example.renalgood.PacientesVinculados;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
+import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -89,9 +89,9 @@ public class PacienteDetalleActivity extends AppCompatActivity {
     private void updateUI(PatientData paciente) {
         tvNombre.setText("Nombre: " + paciente.getName());
         tvEdad.setText("Edad: " + paciente.getAge() + " años");
-        tvSituacionClinica.setText("Situación Clínica: " + paciente.getSituacionClinica());
-        tvPeso.setText("Peso: " + paciente.getPeso() + " kg");
-        tvEstatura.setText("Estatura: " + paciente.getEstatura() + " cm");
+        tvSituacionClinica.setText("Situación Clínica: " + paciente.getClinicalSituation());
+        tvPeso.setText("Peso: " + String.format("%.1f", paciente.getWeight()) + " kg");
+        tvEstatura.setText("Estatura: " + paciente.getHeight() + " cm");
     }
 
     private void loadHistorialAlimenticio() {

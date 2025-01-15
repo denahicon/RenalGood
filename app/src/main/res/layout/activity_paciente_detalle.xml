@@ -16,6 +16,7 @@
             android:background="@color/red"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:title="Detalle del Paciente" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView

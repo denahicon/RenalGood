@@ -1,9 +1,15 @@
 package com.example.renalgood.Nutriologo;
 
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +30,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.List;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class NutriologoActivity extends AppCompatActivity {
@@ -36,22 +44,98 @@ public class NutriologoActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String universidad;
     private NavigationHelper navigationHelper;
+    private FirebaseAuth auth;
+    private String userId;
+    private boolean isActivityActive = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nutriologo);
 
+        isActivityActive = true;
+        auth = FirebaseAuth.getInstance();
+        userId = auth.getCurrentUser().getUid();
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         inicializarVistas();
         setupNavigation();
+        verificarNotificaciones();
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             mostrarDatosIntent(extras);
         } else {
             cargarDatosFirebase();
         }
+    }
+
+    private void verificarNotificaciones() {
+        if (!isActivityActive) return;
+
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("notificaciones")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("leida", false)
+                .whereEqualTo("tipoUsuario", "nutriologo")
+                .addSnapshotListener((value, error) -> {
+                    if (!isActivityActive) return;
+
+                    if (error != null) {
+                        Log.e(TAG, "Error al escuchar notificaciones", error);
+                        return;
+                    }
+
+                    if (value != null && !value.isEmpty()) {
+                        mostrarNotificaciones(value.getDocuments());
+                    }
+                });
+    }
+
+    private void mostrarNotificaciones(List<DocumentSnapshot> notificaciones) {
+        if (!isActivityActive) return;
+
+        runOnUiThread(() -> {
+            Dialog dialog = new Dialog(this);
+            dialog.setContentView(R.layout.dialog_notificacion);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+            TextView mensajeNotificacion = dialog.findViewById(R.id.mensajeNotificacion);
+            Button btnOk = dialog.findViewById(R.id.btnOk);
+
+            // Obtener y mostrar el mensaje completo
+            DocumentSnapshot doc = notificaciones.get(0);
+            String mensaje = doc.getString("mensaje");
+            if (mensaje == null || mensaje.isEmpty()) {
+                String tipo = doc.getString("tipo");
+                mensaje = "Tu " + (tipo != null ? tipo : "solicitud") + " ha sido atendida por el administrador";
+            }
+            mensajeNotificacion.setText(mensaje);
+
+            btnOk.setOnClickListener(v -> {
+                // Marcar todas las notificaciones como leídas
+                for (DocumentSnapshot notification : notificaciones) {
+                    notification.getReference().update("leida", true);
+                }
+                dialog.dismiss();
+            });
+
+            // Configurar el tamaño y estilo del diálogo
+            Window window = dialog.getWindow();
+            if (window != null) {
+                WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+                layoutParams.copyFrom(window.getAttributes());
+                layoutParams.width = (int)(getResources().getDisplayMetrics().widthPixels * 0.9);
+                layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                window.setAttributes(layoutParams);
+            }
+
+            // Mostrar el diálogo si la actividad está activa
+            if (!isFinishing() && !isDestroyed()) {
+                dialog.show();
+            }
+        });
     }
 
     private void inicializarVistas() {

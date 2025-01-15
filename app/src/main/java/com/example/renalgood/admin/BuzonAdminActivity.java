@@ -80,7 +80,6 @@ public class BuzonAdminActivity extends AppCompatActivity {
     }
 
     private void cargarQuejas() {
-        // Cargar quejas de pacientes
         db.collection("comentariosPacientes")
                 .orderBy("fecha", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
@@ -105,7 +104,6 @@ public class BuzonAdminActivity extends AppCompatActivity {
                     }
                 });
 
-        // Cargar quejas de nutriólogos
         db.collection("comentariosNutriologos")
                 .orderBy("fecha", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {

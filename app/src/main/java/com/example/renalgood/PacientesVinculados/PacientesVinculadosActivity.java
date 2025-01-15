@@ -1,6 +1,7 @@
 package com.example.renalgood.PacientesVinculados;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,7 +37,6 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         initializeViews();
         setupNavigationListeners();
         setupFirestore();
-        loadPacientesVinculados();
     }
 
     private void initializeViews() {
@@ -47,18 +47,15 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         ivPacientesVinculados = findViewById(R.id.group_2811039);
         ivCarta = findViewById(R.id.ivCarta);
 
-        // Inicializar lista y adapter
         pacientesList = new ArrayList<>();
         adapter = new PacientesAdapter(pacientesList);
 
-        // Configurar el click listener
         adapter.setOnPacienteClickListener(paciente -> {
-            Intent intent = new Intent(this, PacienteDetalleActivity.class);
+            Intent intent = new Intent(this, com.example.renalgood.PacientesVinculados.PacienteDetalleActivity.class);
             intent.putExtra("pacienteId", paciente.getId());
             startActivity(intent);
         });
 
-        // Configurar RecyclerView
         rvPacientes.setLayoutManager(new LinearLayoutManager(this));
         rvPacientes.setAdapter(adapter);
     }
@@ -75,28 +72,6 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
-    private void loadPacientesVinculados() {
-        db.collection("vinculaciones")
-                .whereEqualTo("nutriologoId", nutriologoId)
-                .whereEqualTo("estado", "activo")
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        Toast.makeText(this, "Error al cargar pacientes", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    pacientesList.clear();
-                    if (value != null) {
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            String pacienteId = doc.getString("pacienteId");
-                            if (pacienteId != null) {
-                                loadPacienteInfo(pacienteId);
-                            }
-                        }
-                    }
-                });
-    }
-
     private void loadPacienteInfo(String pacienteId) {
         db.collection("pacientes")
                 .document(pacienteId)
@@ -105,11 +80,18 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
                     if (documentSnapshot.exists()) {
                         PatientData paciente = documentSnapshot.toObject(PatientData.class);
                         if (paciente != null) {
+                            // Agrega log para debug
+                            Log.d("PacientesVinculados", "Paciente cargado: " + paciente.getName());
                             paciente.setId(documentSnapshot.getId());
                             pacientesList.add(paciente);
                             adapter.notifyDataSetChanged();
                         }
                     }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PacientesVinculados", "Error al cargar paciente: " + e.getMessage());
+                    Toast.makeText(this, "Error al cargar la información del paciente",
+                            Toast.LENGTH_SHORT).show();
                 });
     }
 }
