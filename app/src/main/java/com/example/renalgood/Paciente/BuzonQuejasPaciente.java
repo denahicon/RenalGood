@@ -9,18 +9,11 @@ import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.example.renalgood.Chat.ChatActivity;
-import com.example.renalgood.CitasNutriologo.CitasActivity;
 import com.example.renalgood.ListadeAlimentos.ListadeAlimentosActivity;
-import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
-import com.example.renalgood.Nutriologo.NutriologoActivity;
-import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
 import com.example.renalgood.agendarcitap.CalendarioActivity;
-import com.example.renalgood.historial.HistorialActivity;
-import com.example.renalgood.mensaje.MensajeActivity;
 import com.example.renalgood.recetas.RecetasActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;

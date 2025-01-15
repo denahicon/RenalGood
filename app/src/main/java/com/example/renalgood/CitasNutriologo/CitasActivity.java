@@ -2,22 +2,19 @@ package com.example.renalgood.CitasNutriologo;
 
 import static android.content.ContentValues.TAG;
 
-import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
 import com.example.renalgood.Nutriologo.NavigationHelper;
-import com.example.renalgood.Nutriologo.NutriologoActivity;
-import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
-import com.example.renalgood.mensaje.MensajeActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,12 +39,29 @@ public class CitasActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
 
+        // Configurar la toolbar
         androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // Quitar el título default del ActionBar
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            getSupportActionBar().setDisplayShowHomeEnabled(false);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
+
+        // Configurar el título personalizado
+        TextView titleTextView = findViewById(R.id.toolbar_title);
+        if (titleTextView != null) {
+            // Establecer la fuente tipo1 si la tienes
+            try {
+                Typeface typeface = ResourcesCompat.getFont(this, R.font.tipo1);
+                titleTextView.setTypeface(typeface);
+            } catch (Exception e) {
+                Log.e("CitasActivity", "Error al cargar la fuente", e);
+            }
+        }
+
         inicializarVistas();
         setupViewPager();
         setupNavigationListeners();
@@ -91,11 +105,5 @@ public class CitasActivity extends AppCompatActivity {
                 }
             }
         }).attach();
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
     }
 }

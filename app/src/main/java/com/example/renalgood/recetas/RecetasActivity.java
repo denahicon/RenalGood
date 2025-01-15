@@ -120,7 +120,7 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
     private void loadRecetasByTime() {
         showLoading();
         String currentMealType = getCurrentMealType();
-        Log.d(TAG, "Cargando recetas para: " + currentMealType);
+        tvHorario.setText("Recetas para " + currentMealType);
 
         db.collection("recipes")
                 .whereEqualTo("category", currentMealType)
@@ -132,7 +132,6 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
                         if (recipe != null) {
                             recipe.setId(doc.getId());
                             recetasList.add(recipe);
-                            Log.d(TAG, "Receta añadida: " + recipe.getName());
                         }
                     }
                     recetasAdapter.notifyDataSetChanged();
@@ -141,11 +140,8 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
                     if (recetasList.isEmpty()) {
                         showEmptyState();
                     }
-
-                    Log.d(TAG, "Total recetas cargadas: " + recetasList.size());
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error cargando recetas", e);
                     hideLoading();
                     showError("Error al cargar recetas: " + e.getMessage());
                 });
@@ -157,8 +153,10 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
 
         if (hour >= 6 && hour < 11) {
             return "Desayuno";
-        } else if (hour >= 11 && hour < 18) {
+        } else if (hour >= 11 && hour < 15) {
             return "Comida";
+        } else if (hour >= 15 && hour < 18) {
+            return "Merienda";
         } else {
             return "Cena";
         }

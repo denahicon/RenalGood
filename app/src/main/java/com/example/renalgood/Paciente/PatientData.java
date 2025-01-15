@@ -130,4 +130,13 @@ public class PatientData {
                 "\nGFR: " + gfr +
                 "\nEtapa ERC: " + ckdStage;
     }
+
+    public String getSituacionClinica() {
+    }
+
+    public String getPeso() {
+    }
+
+    public String getEstatura() {
+    }
 }

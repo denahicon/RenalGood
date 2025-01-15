@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class HistorialActivity extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -82,13 +83,18 @@ public class HistorialActivity extends AppCompatActivity {
 
     private void loadWeeklyHistory() {
         Calendar calendar = Calendar.getInstance();
+
+        // Ajustar al domingo de la semana actual
+        while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
         Date endDate = calendar.getTime();
+
+        // Retroceder 7 días para obtener el inicio de la semana (lunes)
         calendar.add(Calendar.DAY_OF_YEAR, -7);
         Date startDate = calendar.getTime();
 
         tvWeekRange.setText("Semana del " + formatDate(startDate) + " al " + formatDate(endDate));
-
-        showLoading(true);
 
         db.collection("usuarios")
                 .document(userId)
@@ -98,44 +104,41 @@ public class HistorialActivity extends AppCompatActivity {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d("HistorialActivity", "Documentos encontrados: " + queryDocumentSnapshots.size());
+                    Map<String, DailyMealHistory> dailyMeals = new TreeMap<>();
 
-                    // Agrupar comidas por día
-                    Map<String, DailyMealHistory> dailyMeals = new HashMap<>();
+                    // Primero crear entradas para todos los días de la semana
+                    Calendar tempCal = Calendar.getInstance();
+                    tempCal.setTime(startDate);
+                    for (int i = 0; i < 7; i++) {
+                        String dateKey = formatDate(tempCal.getTime());
+                        dailyMeals.put(dateKey, new DailyMealHistory(
+                                tempCal.getTime(),
+                                2000, // calorías objetivo
+                                0,    // calorías consumidas
+                                new HashMap<>(),
+                                tempCal.getTime(),
+                                0
+                        ));
+                        tempCal.add(Calendar.DAY_OF_YEAR, 1);
+                    }
 
+                    // Llenar con los datos reales
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
                         MealRecord meal = document.toObject(MealRecord.class);
                         if (meal != null) {
                             String dateKey = formatDate(meal.getTimestamp());
-
-                            DailyMealHistory dayHistory = dailyMeals.getOrDefault(dateKey,
-                                    new DailyMealHistory(meal.getTimestamp(), 2000, 0, new HashMap<>(),
-                                            meal.getTimestamp(), 0));
-
-                            // Actualizar calorías consumidas
-                            dayHistory.setCaloriasDiarias(
-                                    dayHistory.getCaloriasDiarias() + (int)meal.getCalories());
-
-                            // Agregar la comida al mapa de comidas del día
-                            dayHistory.getMeals().put(meal.getMealType(), meal);
-
-                            dailyMeals.put(dateKey, dayHistory);
+                            DailyMealHistory dayHistory = dailyMeals.get(dateKey);
+                            if (dayHistory != null) {
+                                dayHistory.setCaloriasDiarias(
+                                        dayHistory.getCaloriasDiarias() + (int)meal.getCalories());
+                                dayHistory.getMeals().put(meal.getMealType(), meal);
+                            }
                         }
                     }
 
                     List<DailyMealHistory> historyList = new ArrayList<>(dailyMeals.values());
-                    Collections.sort(historyList,
-                            (a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
-
                     historialAdapter.submitList(historyList);
-                    showLoading(false);
-
                     showEmptyState(historyList.isEmpty());
-                })
-                .addOnFailureListener(e -> {
-                    showLoading(false);
-                    Toast.makeText(this, "Error al cargar historial: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
                 });
     }
 

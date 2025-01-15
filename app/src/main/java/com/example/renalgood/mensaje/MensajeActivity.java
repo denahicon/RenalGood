@@ -6,14 +6,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
-import com.example.renalgood.CitasNutriologo.CitasActivity;
+
 import com.example.renalgood.Nutriologo.NavigationHelper;
-import com.example.renalgood.Nutriologo.NutriologoActivity;
-import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;

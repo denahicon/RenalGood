@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -20,7 +21,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -87,30 +87,44 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
 
         holder.checkBoxReceta.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                // Si ya hay una receta seleccionada previamente
-                if (selectedRecipeId != null) {
-                    // 1. Primero reiniciamos el contador
-                    resetDailyCalories();
-
-                    // 2. Luego sumamos las calorías de la nueva receta
-                    selectedRecipeId = recipe.getId();
-                    updateUserCalories(recipe.getCalories(), recipe.getId());
-                    updateUserMealSelection(recipe);
-
-                    // 3. Notificamos el cambio para actualizar la UI
-                    notifyDataSetChanged();
-                } else {
-                    // Si no hay receta seleccionada, simplemente sumamos las calorías
-                    selectedRecipeId = recipe.getId();
-                    updateUserCalories(recipe.getCalories(), recipe.getId());
-                    updateUserMealSelection(recipe);
+                if (selectedRecipeId != null && !selectedRecipeId.equals(recipe.getId())) {
+                    // Si ya hay otra receta seleccionada, mostrar mensaje
+                    buttonView.setChecked(false);
+                    Toast.makeText(context,
+                            "Debes deseleccionar la receta actual antes de seleccionar otra",
+                            Toast.LENGTH_LONG).show();
+                } else if (selectedRecipeId == null) {
+                    // Mostrar diálogo de confirmación para seleccionar
+                    new AlertDialog.Builder(context)
+                            .setTitle("Seleccionar receta")
+                            .setMessage("¿Deseas seleccionar " + recipe.getName() + "?")
+                            .setPositiveButton("Sí", (dialog, which) -> {
+                                selectedRecipeId = recipe.getId();
+                                updateUserCalories(recipe.getCalories(), recipe.getId());
+                                updateUserMealSelection(recipe);
+                                notifyDataSetChanged();
+                            })
+                            .setNegativeButton("No", (dialog, which) -> {
+                                buttonView.setChecked(false);
+                            })
+                            .show();
                 }
             } else {
-                // Si se deselecciona la receta actual
+                // Si se intenta deseleccionar, mostrar diálogo de confirmación
                 if (recipe.getId().equals(selectedRecipeId)) {
-                    selectedRecipeId = null;
-                    resetDailyCalories(); // Reiniciamos el contador
-                    removeUserMealSelection();
+                    new AlertDialog.Builder(context)
+                            .setTitle("Deseleccionar receta")
+                            .setMessage("¿Estás seguro que deseas deseleccionar " + recipe.getName() + "?")
+                            .setPositiveButton("Sí", (dialog, which) -> {
+                                selectedRecipeId = null;
+                                resetDailyCalories();
+                                removeUserMealSelection();
+                                notifyDataSetChanged();
+                            })
+                            .setNegativeButton("No", (dialog, which) -> {
+                                buttonView.setChecked(true);
+                            })
+                            .show();
                 }
             }
         });
@@ -216,23 +230,45 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
             return;
         }
 
-        final DocumentReference userRef = db.collection("usuarios").document(userId);  // Cambiado a usuarios
-        final int caloriesChange = calories;
+        Calendar calendar = Calendar.getInstance();
+        Date today = calendar.getTime();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        Date startOfDay = calendar.getTime();
 
-        userRef.get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        updateExistingUserCalories(userRef, documentSnapshot, caloriesChange);
-                    } else {
-                        createNewUserDocument(userRef, caloriesChange);
+        // Referencia al documento del usuario
+        DocumentReference userRef = db.collection("usuarios").document(userId);
+
+        // Primero obtener todas las comidas del día
+        db.collection("usuarios")
+                .document(userId)
+                .collection("meals")
+                .whereGreaterThanOrEqualTo("timestamp", startOfDay)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int totalCalories = 0;
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        Long mealCalories = doc.getLong("calories");
+                        if (mealCalories != null) {
+                            totalCalories += mealCalories.intValue();
+                        }
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error al obtener documento de usuario: " + e.getMessage());
-                    if (context != null) {
-                        Toast.makeText(context, "Error al actualizar calorías",
-                                Toast.LENGTH_SHORT).show();
-                    }
+
+                    // Actualizar el total de calorías
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("caloriasDiarias", totalCalories);
+                    updates.put("lastUpdate", new Timestamp(today));
+
+                    int finalTotalCalories = totalCalories;
+                    userRef.update(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Calorías totales actualizadas: " + finalTotalCalories);
+                                Intent intent = new Intent("UPDATE_CALORIES_PROGRESS");
+                                intent.putExtra("calories", finalTotalCalories);
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            })
+                            .addOnFailureListener(e -> Log.e(TAG, "Error actualizando calorías", e));
                 });
     }
 

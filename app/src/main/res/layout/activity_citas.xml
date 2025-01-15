@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -22,9 +23,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/white"
-                app:title="Citas"
-                app:titleTextColor="@color/black"
-                app:titleCentered="true"/>
+                app:title=""
+                app:titleCentered="true">
+
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="CITAS"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/tipo1"/>
+
+            </androidx.appcompat.widget.Toolbar>
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
@@ -33,7 +46,8 @@
                 android:background="@color/white"
                 app:tabTextColor="@color/black"
                 app:tabSelectedTextColor="@color/purple_500"
-                app:tabIndicatorColor="@color/purple_500"/>
+                app:tabIndicatorColor="@color/purple_500"
+                app:tabTextAppearance="@style/CustomTabTextAppearance"/>
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -47,78 +61,80 @@
 
     <LinearLayout
         android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_width="0dp"
+        android:layout_height="62dp"
         android:background="#FFFFFF"
         android:elevation="8dp"
         android:gravity="center"
         android:orientation="horizontal"
         android:padding="4dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
             android:id="@+id/ivHome"
             android:layout_width="0dp"
             android:layout_height="24dp"
-            android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:contentDescription="Inicio"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_home"
             android:tintMode="src_in"
-            android:scaleType="fitCenter"
-            android:contentDescription="Inicio"
             app:tint="@color/icon_default" />
 
         <ImageView
             android:id="@+id/ivMensaje"
             android:layout_width="0dp"
             android:layout_height="24dp"
-            android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:contentDescription="Mensajes"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_message"
             android:tintMode="src_in"
-            android:scaleType="fitCenter"
-            android:contentDescription="Mensajes"
             app:tint="@color/icon_default" />
 
         <ImageView
             android:id="@+id/ivCalendario"
             android:layout_width="0dp"
             android:layout_height="24dp"
-            android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:contentDescription="Calendario"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_calendar"
             android:tintMode="src_in"
-            android:scaleType="fitCenter"
-            android:contentDescription="Calendario"
             app:tint="@color/icon_default" />
 
         <ImageView
             android:id="@+id/group_2811039"
             android:layout_width="0dp"
             android:layout_height="24dp"
-            android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:contentDescription="PacientesVinculados"
+            android:scaleType="fitCenter"
             android:src="@drawable/group_2811039"
             android:tintMode="src_in"
-            android:scaleType="fitCenter"
-            android:contentDescription="PacientesVinculados"
             app:tint="@color/icon_default" />
 
         <ImageView
             android:id="@+id/ivCarta"
             android:layout_width="0dp"
             android:layout_height="24dp"
-            android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:contentDescription="Notificaciones"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_email"
             android:tintMode="src_in"
-            android:scaleType="fitCenter"
-            android:contentDescription="Notificaciones"
             app:tint="@color/icon_default" />
     </LinearLayout>
 

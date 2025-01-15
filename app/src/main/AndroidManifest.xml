@@ -93,7 +93,7 @@
             android:name=".ListadeAlimentos.ListadeAlimentosActivity"
             android:exported="false" />
         <activity
-            android:name=".Nutriologo.PacientesVinculadosActivity"
+            android:name=".PacientesVinculados.PacientesVinculadosActivity"
             android:exported="false"
             android:theme="@style/Theme.RenalGood"
             android:windowSoftInputMode="adjustResize" />

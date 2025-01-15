@@ -25,11 +25,17 @@ import com.example.renalgood.recetas.RecetasActivity;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PacienteActivity extends AppCompatActivity {
 
@@ -242,6 +248,35 @@ public class PacienteActivity extends AppCompatActivity {
                 });
     }
 
+    private void checkDayChange() {
+        String userId = mAuth.getCurrentUser().getUid();
+        DocumentReference userRef = db.collection("usuarios").document(userId);
+
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            Timestamp lastUpdate = documentSnapshot.getTimestamp("lastUpdate");
+            if (lastUpdate != null) {
+                Calendar lastUpdateCal = Calendar.getInstance();
+                lastUpdateCal.setTime(lastUpdate.toDate());
+
+                Calendar currentCal = Calendar.getInstance();
+
+                boolean isDifferentDay =
+                        lastUpdateCal.get(Calendar.DAY_OF_YEAR) != currentCal.get(Calendar.DAY_OF_YEAR) ||
+                                lastUpdateCal.get(Calendar.YEAR) != currentCal.get(Calendar.YEAR);
+
+                if (isDifferentDay) {
+                    // Reiniciar calorías para el nuevo día
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("caloriasDiarias", 0);
+                    updates.put("lastUpdate", new Timestamp(new Date()));
+
+                    userRef.update(updates)
+                            .addOnSuccessListener(aVoid -> updateCaloriesProgress(0));
+                }
+            }
+        });
+    }
+
     private void mostrarNotificaciones(List<DocumentSnapshot> notificaciones) {
         if (!isActivityActive) return;
 
@@ -259,7 +294,6 @@ public class PacienteActivity extends AppCompatActivity {
                 textView.setPadding(0, 10, 0, 10);
                 layout.addView(textView);
 
-                // Marcar como leída
                 doc.getReference().update("leida", true);
             }
 

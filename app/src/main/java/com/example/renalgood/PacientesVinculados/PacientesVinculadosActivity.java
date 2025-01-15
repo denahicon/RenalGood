@@ -1,4 +1,4 @@
-package com.example.renalgood.Nutriologo;
+package com.example.renalgood.PacientesVinculados;
 
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -6,10 +6,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.renalgood.CitasNutriologo.CitasActivity;
+import com.example.renalgood.Nutriologo.NavigationHelper;
+import com.example.renalgood.Nutriologo.PacientesAdapter;
 import com.example.renalgood.Paciente.PatientData;
 import com.example.renalgood.R;
-import com.example.renalgood.mensaje.MensajeActivity;
 import com.example.renalgood.mensaje.MensajeDetalleActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -41,22 +41,26 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
 
     private void initializeViews() {
         rvPacientes = findViewById(R.id.rvPacientes);
-        pacientesList = new ArrayList<>();
-        adapter = new PacientesAdapter(pacientesList);
-
-        adapter.setOnPacienteClickListener(paciente -> {
-            Intent intent = new Intent(this, MensajeDetalleActivity.class);
-            intent.putExtra("pacienteId", paciente.getId());
-            intent.putExtra("nombrePaciente", paciente.getName());
-            startActivity(intent);
-        });
-        rvPacientes.setLayoutManager(new LinearLayoutManager(this));
-        rvPacientes.setAdapter(adapter);
         ivHome = findViewById(R.id.ivHome);
         ivMensaje = findViewById(R.id.ivMensaje);
         ivCalendario = findViewById(R.id.ivCalendario);
         ivPacientesVinculados = findViewById(R.id.group_2811039);
         ivCarta = findViewById(R.id.ivCarta);
+
+        // Inicializar lista y adapter
+        pacientesList = new ArrayList<>();
+        adapter = new PacientesAdapter(pacientesList);
+
+        // Configurar el click listener
+        adapter.setOnPacienteClickListener(paciente -> {
+            Intent intent = new Intent(this, PacienteDetalleActivity.class);
+            intent.putExtra("pacienteId", paciente.getId());
+            startActivity(intent);
+        });
+
+        // Configurar RecyclerView
+        rvPacientes.setLayoutManager(new LinearLayoutManager(this));
+        rvPacientes.setAdapter(adapter);
     }
 
     private void setupNavigationListeners() {

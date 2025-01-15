@@ -26,8 +26,11 @@
             android:id="@+id/tvHorario"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/gray"/>
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:textColor="@color/colorAccent"
+            android:fontFamily="@font/tipo1"/>
 
         <ProgressBar
             android:id="@+id/progressBar"

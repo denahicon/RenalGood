@@ -5,6 +5,7 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.example.renalgood.CitasNutriologo.CitasActivity;
+import com.example.renalgood.PacientesVinculados.PacientesVinculadosActivity;
 import com.example.renalgood.R;
 import com.example.renalgood.mensaje.MensajeActivity;
 
