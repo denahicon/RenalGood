@@ -22,4 +22,5 @@
     <color name="pink_strong">#E91E63</color>
     <color name="green">#4CAF50</color>
     <color name="orange">#FF9800</color>
+    <color name="icon_selected">#2196F3</color>
 </resources>

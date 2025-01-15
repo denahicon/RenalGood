@@ -1,11 +1,15 @@
 package com.example.renalgood.Nutriologo;
 
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.example.renalgood.CitasNutriologo.CitasActivity;
 import com.example.renalgood.Paciente.PatientData;
 import com.example.renalgood.R;
+import com.example.renalgood.mensaje.MensajeActivity;
 import com.example.renalgood.mensaje.MensajeDetalleActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -21,6 +25,8 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
     private List<PatientData> pacientesList;
     private FirebaseFirestore db;
     private String nutriologoId;
+    private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
+    private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +34,7 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         setContentView(R.layout.activity_pacientes_vinculados);
 
         initializeViews();
+        setupNavigationListeners();
         setupFirestore();
         loadPacientesVinculados();
     }
@@ -38,16 +45,25 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         adapter = new PacientesAdapter(pacientesList);
 
         adapter.setOnPacienteClickListener(paciente -> {
-            // Aquí puedes manejar el click en un paciente
-            // Por ejemplo, abrir el chat o ver detalles
             Intent intent = new Intent(this, MensajeDetalleActivity.class);
             intent.putExtra("pacienteId", paciente.getId());
             intent.putExtra("nombrePaciente", paciente.getName());
             startActivity(intent);
         });
-
         rvPacientes.setLayoutManager(new LinearLayoutManager(this));
         rvPacientes.setAdapter(adapter);
+        ivHome = findViewById(R.id.ivHome);
+        ivMensaje = findViewById(R.id.ivMensaje);
+        ivCalendario = findViewById(R.id.ivCalendario);
+        ivPacientesVinculados = findViewById(R.id.group_2811039);
+        ivCarta = findViewById(R.id.ivCarta);
+    }
+
+    private void setupNavigationListeners() {
+        navigationHelper = new NavigationHelper(
+                this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
+        );
+        navigationHelper.setupNavigation("pacientes");
     }
 
     private void setupFirestore() {

@@ -19,6 +19,7 @@ import com.example.renalgood.Nutriologo.NutriologoActivity;
 import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
 import com.example.renalgood.agendarcitap.CalendarioActivity;
+import com.example.renalgood.historial.HistorialActivity;
 import com.example.renalgood.mensaje.MensajeActivity;
 import com.example.renalgood.recetas.RecetasActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,7 +33,7 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
     private EditText editTextComentario;
     private RadioGroup radioGroupTipo;
     private Button buttonEnviar;
-    private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
+    private ImageView ivHome, ivLupa, ivChef, ivMensaje, ivCarta, ivCalendario;;
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
@@ -66,10 +67,11 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
             Log.d("BuzonQuejas", "Button encontrado: " + (buttonEnviar != null));
 
             ivHome = findViewById(R.id.ivHome);
+            ivLupa = findViewById(R.id.ivLupa);
+            ivChef = findViewById(R.id.ivChef);
             ivMensaje = findViewById(R.id.ivMensaje);
-            ivCalendario = findViewById(R.id.ivCalendario);
-            ivPacientesVinculados = findViewById(R.id.ivPacientesVinculados);
             ivCarta = findViewById(R.id.ivCarta);
+            ivCalendario = findViewById(R.id.ivCalendario);
             Log.d("BuzonQuejas", "Navigation icons encontrados");
         } catch (Exception e) {
             Log.e("BuzonQuejas", "Error en initializeViews: " + e.getMessage());
@@ -86,51 +88,48 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
     }
 
     private void setupNavigationListeners() {
-        ivHome.setOnClickListener(view -> {
-            navigateToActivity(NutriologoActivity.class);
-            highlightCurrentIcon(ivHome);
+        ivHome.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PacienteActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
-        ivMensaje.setOnClickListener(view -> {
-            navigateToActivity(MensajeActivity.class);
-            highlightCurrentIcon(ivMensaje);
+        ivLupa.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ListadeAlimentosActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
-        ivCalendario.setOnClickListener(view -> {
-            navigateToActivity(CitasActivity.class);
-            highlightCurrentIcon(ivCalendario);
+        ivChef.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RecetasActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
-        ivPacientesVinculados.setOnClickListener(view -> {
-            navigateToActivity(PacientesVinculadosActivity.class);
-            highlightCurrentIcon(ivPacientesVinculados);
+        ivMensaje.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ChatActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
         ivCarta.setImageResource(R.drawable.ic_email);
-        ivCarta.setColorFilter(getResources().getColor(R.color.teal_700));
+        ivCarta.setColorFilter(getResources().getColor(R.color.pink_strong));
 
-        highlightCurrentIcon(ivMensaje);
-    }
-
-    private void navigateToActivity(Class<?> destinationClass) {
-        if (this.getClass() != destinationClass) {
-            Intent intent = new Intent(this, destinationClass);
+        ivCalendario.setOnClickListener(v -> {
+            Intent intent = new Intent(this, CalendarioActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        }
-    }
-
-    private void highlightCurrentIcon(ImageView selectedIcon) {
-        int defaultColor = ContextCompat.getColor(this, R.color.icon_default);
-        int primaryColor = ContextCompat.getColor(this, R.color.primary);
-
-        ivHome.setColorFilter(defaultColor);
-        ivMensaje.setColorFilter(defaultColor);
-        ivCalendario.setColorFilter(defaultColor);
-        ivPacientesVinculados.setColorFilter(defaultColor);
-        ivCarta.setColorFilter(defaultColor);
-
-        selectedIcon.setColorFilter(primaryColor);
+            finish();
+        });
     }
 
     private boolean validarFormulario() {

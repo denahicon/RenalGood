@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
+import com.example.renalgood.Nutriologo.NavigationHelper;
 import com.example.renalgood.Nutriologo.NutriologoActivity;
 import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
@@ -29,6 +30,7 @@ public class CitasActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
+    private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,47 +68,10 @@ public class CitasActivity extends AppCompatActivity {
     }
 
     private void setupNavigationListeners() {
-        ivHome.setOnClickListener(view -> {
-            navigateToActivity(NutriologoActivity.class);
-            highlightCurrentIcon(ivHome);
-        });
-        ivMensaje.setOnClickListener(view -> {
-            navigateToActivity(MensajeActivity.class);
-            highlightCurrentIcon(ivMensaje);
-        });
-
-        ivCalendario.setImageResource(R.drawable.ic_calendar);
-        ivCalendario.setColorFilter(getResources().getColor(R.color.teal_700));
-
-        ivPacientesVinculados.setOnClickListener(view -> {
-            navigateToActivity(PacientesVinculadosActivity.class);
-            highlightCurrentIcon(ivPacientesVinculados);
-        });
-        ivCarta.setOnClickListener(view -> {
-            navigateToActivity(BuzonQuejasActivity.class);
-            highlightCurrentIcon(ivCarta);
-        });
-    }
-
-    private void navigateToActivity(Class<?> destinationClass) {
-        if (this.getClass() != destinationClass) {
-            Intent intent = new Intent(this, destinationClass);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        }
-    }
-
-    private void highlightCurrentIcon(ImageView selectedIcon) {
-        int defaultColor = ContextCompat.getColor(this, R.color.icon_default);
-        int primaryColor = ContextCompat.getColor(this, R.color.primary);
-
-        ivHome.setColorFilter(defaultColor);
-        ivMensaje.setColorFilter(defaultColor);
-        ivCalendario.setColorFilter(defaultColor);
-        ivPacientesVinculados.setColorFilter(defaultColor);
-        ivCarta.setColorFilter(defaultColor);
-
-        selectedIcon.setColorFilter(primaryColor);
+        navigationHelper = new NavigationHelper(
+                this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
+        );
+        navigationHelper.setupNavigation("calendario");
     }
 
     private void setupViewPager() {

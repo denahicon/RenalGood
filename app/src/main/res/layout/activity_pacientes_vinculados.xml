@@ -8,7 +8,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary"
+        android:background="@color/red"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:layout_constraintTop_toTopOf="parent"
         app:title="Pacientes Vinculados" />
@@ -20,5 +20,82 @@
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+    <LinearLayout
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#FFFFFF"
+        android:elevation="8dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:id="@+id/ivHome"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_home"
+            android:tintMode="src_in"
+            android:scaleType="fitCenter"
+            android:contentDescription="Inicio"
+            app:tint="@color/icon_default" />
+
+        <ImageView
+            android:id="@+id/ivMensaje"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_message"
+            android:tintMode="src_in"
+            android:scaleType="fitCenter"
+            android:contentDescription="Mensajes"
+            app:tint="@color/icon_default" />
+
+        <ImageView
+            android:id="@+id/ivCalendario"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_calendar"
+            android:tintMode="src_in"
+            android:scaleType="fitCenter"
+            android:contentDescription="Calendario"
+            app:tint="@color/icon_default" />
+
+        <ImageView
+            android:id="@+id/group_2811039"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:src="@drawable/group_2811039"
+            android:tintMode="src_in"
+            android:scaleType="fitCenter"
+            android:contentDescription="PacientesVinculados"
+            app:tint="@color/icon_default" />
+
+        <ImageView
+            android:id="@+id/ivCarta"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_email"
+            android:tintMode="src_in"
+            android:scaleType="fitCenter"
+            android:contentDescription="Notificaciones"
+            app:tint="@color/icon_default" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,8 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -24,6 +29,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.List;
+
 public class PacienteActivity extends AppCompatActivity {
 
     private ShapeableImageView ivImagenPaciente;
@@ -36,11 +43,13 @@ public class PacienteActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private NutrientCalculations calculator;
+    private boolean isActivityActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_paciente);
+        isActivityActive = true;
 
         initializeViews();
         initializeFirebase();
@@ -48,6 +57,8 @@ public class PacienteActivity extends AppCompatActivity {
         loadPatientData();
         setupNavigationListeners();
         setupCaloriesReceiver();
+        checkNotificaciones();
+        actualizarIndicadorNotificaciones();
     }
 
     @Override
@@ -56,6 +67,18 @@ public class PacienteActivity extends AppCompatActivity {
         if (caloriesUpdateReceiver != null) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(caloriesUpdateReceiver);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActivityActive = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActivityActive = false;
     }
 
     private void initializeViews() {
@@ -174,6 +197,85 @@ public class PacienteActivity extends AppCompatActivity {
         progressCalorias.setProgress(Math.min(progress, 100));
     }
 
+    private void actualizarIndicadorNotificaciones() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        ImageView ivNotificacion = findViewById(R.id.ivNotificacion);
+
+        FirebaseFirestore.getInstance()
+                .collection("notificaciones")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("leida", false)
+                .addSnapshotListener((value, error) -> {
+                    if (!isActivityActive) return;
+
+                    if (error != null) {
+                        return;
+                    }
+
+                    runOnUiThread(() -> {
+                        if (value != null && !value.isEmpty()) {
+                            ivNotificacion.setVisibility(View.VISIBLE);
+                        } else {
+                            ivNotificacion.setVisibility(View.GONE);
+                        }
+                    });
+                });
+    }
+
+    private void checkNotificaciones() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        FirebaseFirestore.getInstance()
+                .collection("notificaciones")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("leida", false)
+                .addSnapshotListener((value, error) -> {
+                    if (!isActivityActive) return; // Verificar si la actividad está activa
+
+                    if (error != null) {
+                        return;
+                    }
+
+                    if (value != null && !value.isEmpty()) {
+                        mostrarNotificaciones(value.getDocuments());
+                    }
+                });
+    }
+
+    private void mostrarNotificaciones(List<DocumentSnapshot> notificaciones) {
+        if (!isActivityActive) return;
+
+        runOnUiThread(() -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Notificaciones");
+
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding(20, 20, 20, 20);
+
+            for (DocumentSnapshot doc : notificaciones) {
+                TextView textView = new TextView(this);
+                textView.setText(doc.getString("mensaje"));
+                textView.setPadding(0, 10, 0, 10);
+                layout.addView(textView);
+
+                // Marcar como leída
+                doc.getReference().update("leida", true);
+            }
+
+            builder.setView(layout);
+            builder.setPositiveButton("OK", null);
+
+            try {
+                AlertDialog dialog = builder.create();
+                if (!isFinishing() && !isDestroyed()) {
+                    dialog.show();
+                }
+            } catch (Exception e) {
+                Log.e("PacienteActivity", "Error mostrando notificaciones", e);
+            }
+        });
+    }
 
     private void setupNavigationListeners() {
         ivHome.setImageResource(R.drawable.ic_home);

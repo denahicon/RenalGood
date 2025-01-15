@@ -12,9 +12,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.renalgood.Chat.ChatActivity;
+import com.example.renalgood.CitasNutriologo.CitasActivity;
 import com.example.renalgood.agendarcitap.CalendarioActivity;
 import com.example.renalgood.Paciente.PacienteActivity;
 import com.example.renalgood.R;
+import com.example.renalgood.mensaje.MensajeActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -26,16 +28,14 @@ public class BuzonQuejasActivity extends AppCompatActivity {
     private EditText editTextComentario;
     private RadioGroup radioGroupTipo;
     private Button buttonEnviar;
-
-    // Elementos de navegación
     private ImageView ivHome;
     private ImageView ivMensaje;
     private ImageView ivCalendario;
     private ImageView ivPacientesVinculados;
     private ImageView ivCarta;
-
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+    private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,16 +47,13 @@ public class BuzonQuejasActivity extends AppCompatActivity {
 
         initializeViews();
         setupListeners();
-        setupNavigation();
+        setupNavigationListeners();
     }
 
     private void initializeViews() {
-        // Inicializar vistas del formulario
         editTextComentario = findViewById(R.id.editTextComentario);
         radioGroupTipo = findViewById(R.id.radioGroupTipo);
         buttonEnviar = findViewById(R.id.buttonEnviar);
-
-        // Inicializar vistas de navegación
         ivHome = findViewById(R.id.ivHome);
         ivMensaje = findViewById(R.id.ivMensaje);
         ivCalendario = findViewById(R.id.ivCalendario);
@@ -75,41 +72,11 @@ public class BuzonQuejasActivity extends AppCompatActivity {
         });
     }
 
-    private void setupNavigation() {
-        ivHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                verificarTipoUsuarioYNavegar();
-            }
-        });
-
-        ivMensaje.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(BuzonQuejasActivity.this, ChatActivity.class));
-            }
-        });
-
-        ivCalendario.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(BuzonQuejasActivity.this, CalendarioActivity.class));
-            }
-        });
-
-        ivPacientesVinculados.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(BuzonQuejasActivity.this, PacientesVinculadosActivity.class));
-            }
-        });
-
-        ivCarta.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                recreate();
-            }
-        });
+    private void setupNavigationListeners() {
+        navigationHelper = new NavigationHelper(
+                this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
+        );
+        navigationHelper.setupNavigation("buzon");
     }
 
     private void verificarTipoUsuarioYNavegar() {

@@ -253,15 +253,29 @@
             android:src="@drawable/ic_message"
             android:contentDescription="Mensajes" />
 
-        <ImageView
-            android:id="@+id/ivCarta"
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_email"
-            android:contentDescription="Notificaciones" />
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/ivCarta"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_email"
+                android:contentDescription="Notificaciones" />
+
+            <ImageView
+                android:id="@+id/ivNotificacion"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:src="@drawable/ic_notification_dot"
+                android:visibility="gone"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"/>
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/ivCalendario"

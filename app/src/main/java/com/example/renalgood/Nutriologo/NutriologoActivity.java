@@ -35,6 +35,7 @@ public class NutriologoActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private String universidad;
+    private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +44,8 @@ public class NutriologoActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-
         inicializarVistas();
-        setupNavigationListeners();
-
+        setupNavigation();
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             mostrarDatosIntent(extras);
@@ -78,6 +77,13 @@ public class NutriologoActivity extends AppCompatActivity {
         }
     }
 
+    private void setupNavigation() {
+        navigationHelper = new NavigationHelper(
+                this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
+        );
+        navigationHelper.setupNavigation("home");
+    }
+
     private void validateViews() throws Exception {
         if (tvNombre == null || tvAreaEspecializacion == null || tvAnosExperiencia == null ||
                 tvDireccionClinica == null || tvCorreo == null || tvUniversidad == null ||
@@ -85,44 +91,6 @@ public class NutriologoActivity extends AppCompatActivity {
                 ivCalendario == null || ivPacientesVinculados == null || ivCarta == null) {
             throw new Exception("Error al inicializar las vistas");
         }
-    }
-
-    private void setupNavigationListeners() {
-        ivHome.setImageResource(R.drawable.ic_home);
-        ivHome.setColorFilter(getResources().getColor(R.color.teal_700));
-
-        ivMensaje.setOnClickListener(view -> {
-            navigateToActivity(MensajeActivity.class);
-            highlightCurrentIcon(ivMensaje);
-        });
-        ivCalendario.setOnClickListener(view -> {
-            navigateToActivity(CitasActivity.class);
-            highlightCurrentIcon(ivCalendario);
-        });
-        ivPacientesVinculados.setOnClickListener(view -> {
-            navigateToActivity(PacientesVinculadosActivity.class);
-            highlightCurrentIcon(ivPacientesVinculados);
-        });
-        ivCarta.setOnClickListener(view -> {
-            navigateToActivity(BuzonQuejasActivity.class);
-            highlightCurrentIcon(ivCarta);
-        });
-    }
-
-    private void navigateToActivity(Class<?> activityClass) {
-        Intent intent = new Intent(this, activityClass);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
-
-    private void highlightCurrentIcon(ImageView selectedIcon) {
-        ivHome.setAlpha(0.5f);
-        ivMensaje.setAlpha(0.5f);
-        ivCalendario.setAlpha(0.5f);
-        ivPacientesVinculados.setAlpha(0.5f);
-        ivCarta.setAlpha(0.5f);
-        selectedIcon.setAlpha(1.0f);
     }
 
     private void mostrarDatosIntent(Bundle extras) {

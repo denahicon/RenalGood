@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.Nutriologo.BuzonQuejasActivity;
 import com.example.renalgood.CitasNutriologo.CitasActivity;
+import com.example.renalgood.Nutriologo.NavigationHelper;
 import com.example.renalgood.Nutriologo.NutriologoActivity;
 import com.example.renalgood.Nutriologo.PacientesVinculadosActivity;
 import com.example.renalgood.R;
@@ -35,6 +36,7 @@ public class MensajeActivity extends AppCompatActivity {
     private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
     private DatabaseReference mDatabase;
     private String nutriologoId;
+    private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,56 +132,15 @@ public class MensajeActivity extends AppCompatActivity {
         ivHome = findViewById(R.id.ivHome);
         ivMensaje = findViewById(R.id.ivMensaje);
         ivCalendario = findViewById(R.id.ivCalendario);
-        ivPacientesVinculados = findViewById(R.id.ivPacientesVinculados);
+        ivPacientesVinculados = findViewById(R.id.group_2811039);
         ivCarta = findViewById(R.id.ivCarta);
     }
 
     private void setupNavigationListeners() {
-        ivHome.setOnClickListener(view -> {
-            navigateToActivity(NutriologoActivity.class);
-            highlightCurrentIcon(ivHome);
-        });
-
-        ivMensaje.setImageResource(R.drawable.ic_email);
-        ivMensaje.setColorFilter(getResources().getColor(R.color.teal_700));
-
-        ivCalendario.setOnClickListener(view -> {
-            navigateToActivity(CitasActivity.class);
-            highlightCurrentIcon(ivCalendario);
-        });
-
-        ivPacientesVinculados.setOnClickListener(view -> {
-            navigateToActivity(PacientesVinculadosActivity.class);
-            highlightCurrentIcon(ivPacientesVinculados);
-        });
-
-        ivCarta.setOnClickListener(view -> {
-            navigateToActivity(BuzonQuejasActivity.class);
-            highlightCurrentIcon(ivCarta);
-        });
-
-        highlightCurrentIcon(ivMensaje);
-    }
-
-    private void navigateToActivity(Class<?> destinationClass) {
-        if (this.getClass() != destinationClass) {
-            Intent intent = new Intent(this, destinationClass);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        }
-    }
-
-    private void highlightCurrentIcon(ImageView selectedIcon) {
-        int defaultColor = ContextCompat.getColor(this, R.color.icon_default);
-        int primaryColor = ContextCompat.getColor(this, R.color.primary);
-
-        ivHome.setColorFilter(defaultColor);
-        ivMensaje.setColorFilter(defaultColor);
-        ivCalendario.setColorFilter(defaultColor);
-        ivPacientesVinculados.setColorFilter(defaultColor);
-        ivCarta.setColorFilter(defaultColor);
-
-        selectedIcon.setColorFilter(primaryColor);
+        navigationHelper = new NavigationHelper(
+                this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
+        );
+        navigationHelper.setupNavigation("mensaje");
     }
 
     private void setupFirebase() {
