@@ -1,22 +1,15 @@
 package com.example.renalgood.mensaje;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.renalgood.R;
-import java.util.ArrayList;
 import java.util.List;
-import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MensajeListAdapter extends RecyclerView.Adapter<MensajeListAdapter.ViewHolder> {
     private List<MensajeList> mensajeList;
@@ -26,14 +19,9 @@ public class MensajeListAdapter extends RecyclerView.Adapter<MensajeListAdapter.
         void onItemClick(MensajeList mensaje);
     }
 
-    public MensajeListAdapter(List<MensajeList> mensajeList, OnItemClickListener onItemClickListener) {
+    public MensajeListAdapter(List<MensajeList> mensajeList, OnItemClickListener listener) {
         this.mensajeList = mensajeList;
-        this.onItemClickListener = onItemClickListener;
-    }
-
-    public void updateList(List<MensajeList> newMensajeList) {
-        this.mensajeList = newMensajeList;
-        notifyDataSetChanged();
+        this.onItemClickListener = listener;
     }
 
     @NonNull
@@ -46,8 +34,7 @@ public class MensajeListAdapter extends RecyclerView.Adapter<MensajeListAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        MensajeList mensaje = mensajeList.get(position);
-        holder.bind(mensaje, onItemClickListener);
+        holder.bind(mensajeList.get(position), onItemClickListener);
     }
 
     @Override
@@ -55,32 +42,38 @@ public class MensajeListAdapter extends RecyclerView.Adapter<MensajeListAdapter.
         return mensajeList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView nombreTextView;
-        public TextView ultimoMensajeTextView;
-        public TextView horaTextView;
-        public ImageView profileImageView;
+    public void updateList(List<MensajeList> newList) {
+        this.mensajeList = newList;
+        notifyDataSetChanged();
+    }
 
-        public ViewHolder(View itemView) {
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        private final TextView nombreTextView;
+        private final TextView mensajeTextView;
+        private final TextView horaTextView;
+        private final ImageView profileImageView;
+
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            nombreTextView = itemView.findViewById(R.id.tvContactName);
-            ultimoMensajeTextView = itemView.findViewById(R.id.tvLastMessage);
-            horaTextView = itemView.findViewById(R.id.tvTimestamp);
-            profileImageView = itemView.findViewById(R.id.ivProfilePic);
+            nombreTextView = itemView.findViewById(R.id.tvNombre);
+            mensajeTextView = itemView.findViewById(R.id.tvMensaje);
+            horaTextView = itemView.findViewById(R.id.tvHora);
+            profileImageView = itemView.findViewById(R.id.ivFotoPerfil);
         }
 
         public void bind(final MensajeList mensaje, final OnItemClickListener listener) {
-            nombreTextView.setText(mensaje.getNombre());
-            ultimoMensajeTextView.setText(mensaje.getUltimoMensaje());
-            horaTextView.setText(mensaje.getHora());
+            if (nombreTextView != null) nombreTextView.setText(mensaje.getNombre());
+            if (mensajeTextView != null) mensajeTextView.setText(mensaje.getUltimoMensaje());
+            if (horaTextView != null) horaTextView.setText(mensaje.getHora());
 
-            if (mensaje.getProfilePic() != null && !mensaje.getProfilePic().isEmpty()) {
+            if (profileImageView != null && mensaje.getProfilePic() != null && !mensaje.getProfilePic().isEmpty()) {
                 Glide.with(itemView.getContext())
                         .load(mensaje.getProfilePic())
                         .placeholder(R.drawable.default_profile)
                         .error(R.drawable.default_profile)
+                        .circleCrop()
                         .into(profileImageView);
-            } else {
+            } else if (profileImageView != null) {
                 profileImageView.setImageResource(R.drawable.default_profile);
             }
 

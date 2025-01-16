@@ -1,26 +1,31 @@
 package com.example.renalgood.mensaje;
 
 public class Mensaje {
-    private String message;
+    private String mensaje;
     private boolean read;
-    private String senderId;
+    private String emisorId;
     private long timestamp;
 
-    // Constructor
-    public Mensaje(String message, boolean read, String senderId, long timestamp) {
-        this.message = message;
+    // Constructor vacío requerido por Firebase
+    public Mensaje() {
+        // Constructor vacío requerido por Firebase
+    }
+
+    // Constructor con parámetros para uso en la app
+    public Mensaje(String mensaje, boolean read, String emisorId, long timestamp) {
+        this.mensaje = mensaje;
         this.read = read;
-        this.senderId = senderId;
+        this.emisorId = emisorId;
         this.timestamp = timestamp;
     }
 
-    // Getter and Setter methods
-    public String getMessage() {
-        return message;
+    // Getters y setters con nombres exactamente iguales a los campos en Firebase
+    public String getMensaje() {
+        return mensaje;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
     }
 
     public boolean isRead() {
@@ -31,12 +36,12 @@ public class Mensaje {
         this.read = read;
     }
 
-    public String getSenderId() {
-        return senderId;
+    public String getEmisorId() {
+        return emisorId;
     }
 
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
+    public void setEmisorId(String emisorId) {
+        this.emisorId = emisorId;
     }
 
     public long getTimestamp() {

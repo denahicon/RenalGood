@@ -27,7 +27,7 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemViewType(int position) {
         Mensaje mensaje = mensajes.get(position);
-        return mensaje.getSenderId().equals(idUsuarioActual) ? TIPO_ENVIADO : TIPO_RECIBIDO;
+        return mensaje.getEmisorId().equals(idUsuarioActual) ? TIPO_ENVIADO : TIPO_RECIBIDO;
     }
 
     @NonNull
@@ -69,7 +69,7 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(Mensaje mensaje) {
-            textoMensaje.setText(mensaje.getMessage());
+            textoMensaje.setText(mensaje.getMensaje());
             if (mensaje.getTimestamp() != 0) {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 textoHora.setText(sdf.format(new Date(mensaje.getTimestamp())));
@@ -87,7 +87,7 @@ public class MensajeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(Mensaje mensaje) {
-            textoMensaje.setText(mensaje.getMessage());
+            textoMensaje.setText(mensaje.getMensaje());
             if (mensaje.getTimestamp() != 0) {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 textoHora.setText(sdf.format(new Date(mensaje.getTimestamp())));

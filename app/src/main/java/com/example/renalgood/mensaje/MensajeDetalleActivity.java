@@ -148,6 +148,7 @@ public class MensajeDetalleActivity extends AppCompatActivity {
         mensajeMap.put("mensaje", mensaje);
         mensajeMap.put("emisorId", nutriologoId);
         mensajeMap.put("timestamp", ServerValue.TIMESTAMP);
+        mensajeMap.put("read", false);
 
         chatRef.setValue(mensajeMap);
     }
@@ -180,7 +181,6 @@ public class MensajeDetalleActivity extends AppCompatActivity {
         btnEnviar.setEnabled(false);
         etMensaje.setHint("No puedes enviar mensajes a este paciente");
     }
-
 
     private String getMensajeId(String nutriologoId, String pacienteId) {
         return String.format("chat_%s_%s", nutriologoId, pacienteId);

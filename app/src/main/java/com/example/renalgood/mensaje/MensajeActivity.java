@@ -5,6 +5,8 @@ import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,150 +22,50 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MensajeActivity extends AppCompatActivity {
     private RecyclerView rvMensajes;
-    private List<Mensaje> mensajeList;
+    private List<MensajeList> mensajeList;
     private MensajeListAdapter mensajeAdapter;
     private FirebaseFirestore db;
-    private ImageView ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta;
-    private DatabaseReference mDatabase;
     private String nutriologoId;
     private NavigationHelper navigationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setBackgroundDrawableResource(android.R.color.white);
         setContentView(R.layout.activity_mensajes);
 
-        mDatabase = FirebaseDatabase.getInstance("https://ya-basta-default-rtdb.firebaseio.com/").getReference();
         nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db = FirebaseFirestore.getInstance();
 
         initializeViews();
-        setupFirebase();
         setupRecyclerView();
-        setupNavigationListeners();
-
-        cargarMensajesNutriologo(nutriologoId);
-
-        debugDatabase();
-    }
-
-    private void cargarMensajesNutriologo(String nutriologoId) {
-        mDatabase.child("vinculaciones").orderByChild("nutriologoId").equalTo(nutriologoId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot vinculacionSnapshot : dataSnapshot.getChildren()) {
-                            Vinculacion vinculacion = vinculacionSnapshot.getValue(Vinculacion.class);
-                            if (vinculacion != null && "activo".equals(vinculacion.getEstado())) {
-                                String chatId = vinculacion.getPacienteId() + "_" + nutriologoId;
-                                cargarMensajes(chatId);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.w("MensajeActivity", "Error obteniendo vinculaciones.", databaseError.toException());
-                    }
-                });
-    }
-
-    private void cargarMensajes(String chatId) {
-        mDatabase.child("chats").child(chatId).child("messages")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        List<Mensaje> mensajes = new ArrayList<>();
-                        for (DataSnapshot mensajeSnapshot : dataSnapshot.getChildren()) {
-                            Mensaje mensaje = mensajeSnapshot.getValue(Mensaje.class);
-                            mensajes.add(mensaje);
-                        }
-                        actualizarUIConMensajes(mensajes);
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.w("MensajeActivity", "Error obteniendo mensajes.", databaseError.toException());
-                    }
-                });
-    }
-
-    private void debugDatabase() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        Log.d("DEBUG", "Usuario actual (Nutriólogo): " + userId);
-
-        db.collection("vinculaciones")
-                .whereEqualTo("nutriologoId", userId)
-                .whereEqualTo("estado", "activo")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    Log.d("DEBUG", "Total vinculaciones activas: " + querySnapshot.size());
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Log.d("DEBUG", "Vinculación encontrada: " + doc.getId());
-                        Log.d("DEBUG", "Datos: " + doc.getData());
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("DEBUG", "Error consultando vinculaciones: " + e.toString());
-                });
-
-        DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference().child("chats");
-        chatRef.get().addOnSuccessListener(snapshot -> {
-            Log.d("DEBUG", "Total chats en Realtime Database: " + snapshot.getChildrenCount());
-            for (DataSnapshot chat : snapshot.getChildren()) {
-                Log.d("DEBUG", "Chat ID: " + chat.getKey());
-                Log.d("DEBUG", "Chat Data: " + chat.getValue());
-            }
-        });
+        loadChatsForNutriologo();
     }
 
     private void initializeViews() {
         rvMensajes = findViewById(R.id.rvChats);
-        ivHome = findViewById(R.id.ivHome);
-        ivMensaje = findViewById(R.id.ivMensaje);
-        ivCalendario = findViewById(R.id.ivCalendario);
-        ivPacientesVinculados = findViewById(R.id.group_2811039);
-        ivCarta = findViewById(R.id.ivCarta);
-    }
+        ImageView ivHome = findViewById(R.id.ivHome);
+        ImageView ivMensaje = findViewById(R.id.ivMensaje);
+        ImageView ivCalendario = findViewById(R.id.ivCalendario);
+        ImageView ivPacientesVinculados = findViewById(R.id.group_2811039);
+        ImageView ivCarta = findViewById(R.id.ivCarta);
 
-    private void setupNavigationListeners() {
         navigationHelper = new NavigationHelper(
                 this, ivHome, ivMensaje, ivCalendario, ivPacientesVinculados, ivCarta
         );
         navigationHelper.setupNavigation("mensaje");
     }
 
-    private void setupFirebase() {
-        db = FirebaseFirestore.getInstance();
-        nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        Log.d("DEBUG_CHAT", "NutriologoId: " + nutriologoId);
-
-        db.collection("vinculaciones")
-                .whereEqualTo("nutriologoId", nutriologoId)
-                .whereEqualTo("estado", "activo")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    Log.d("DEBUG_CHAT", "Número de vinculaciones encontradas: " + querySnapshot.size());
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Log.d("DEBUG_CHAT", "Vinculación encontrada - PacienteId: " + doc.getString("pacienteId"));
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("DEBUG_CHAT", "Error al consultar vinculaciones: " + e.getMessage());
-                });
-    }
-
     private void setupRecyclerView() {
         mensajeList = new ArrayList<>();
-
-        mensajeAdapter = new MensajeListAdapter(new ArrayList<>(), mensaje -> {
+        mensajeAdapter = new MensajeListAdapter(mensajeList, mensaje -> {
             Intent intent = new Intent(this, MensajeDetalleActivity.class);
             intent.putExtra("pacienteId", mensaje.getPacienteId());
             intent.putExtra("nombrePaciente", mensaje.getNombre());
@@ -174,25 +76,104 @@ public class MensajeActivity extends AppCompatActivity {
         rvMensajes.setAdapter(mensajeAdapter);
     }
 
-    private void actualizarUIConMensajes(List<Mensaje> mensajes) {
-        List<MensajeList> mensajeListItems = new ArrayList<>();
-        for (Mensaje mensaje : mensajes) {
-            mensajeListItems.add(convertToMensajeList(mensaje));
-        }
+    private void loadChatsForNutriologo() {
+        // Query vinculaciones activas del nutriólogo
+        db.collection("vinculaciones")
+                .whereEqualTo("nutriologoId", nutriologoId)
+                .whereEqualTo("estado", "activo")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("MensajeActivity", "Error loading chats: ", error);
+                        return;
+                    }
 
-        mensajeAdapter.updateList(mensajeListItems);
-
-        Log.d("MensajeActivity", "Lista de mensajes actualizada con " + mensajes.size() + " elementos");
+                    if (value != null) {
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            String pacienteId = doc.getString("pacienteId");
+                            if (pacienteId != null) {
+                                loadPacienteInfo(pacienteId);
+                            }
+                        }
+                    }
+                });
     }
 
-    private MensajeList convertToMensajeList(Mensaje mensaje) {
-        String pacienteId = mensaje.getSenderId(); // Asumimos que senderId es el pacienteId
-        String nombre = "Nombre del Paciente"; // Aquí deberías obtener el nombre del paciente
-        String profilePic = ""; // Aquí deberías obtener la imagen de perfil del paciente
-        String ultimoMensaje = mensaje.getMessage();
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(mensaje.getTimestamp()));
+    private void loadPacienteInfo(String pacienteId) {
+        // Obtener información del paciente
+        db.collection("pacientes")
+                .document(pacienteId)
+                .get()
+                .addOnSuccessListener(pacienteDoc -> {
+                    if (pacienteDoc.exists()) {
+                        String nombre = pacienteDoc.getString("nombre");
+                        String profilePic = pacienteDoc.getString("profilePic");
 
-        return new MensajeList(pacienteId, nombre, ultimoMensaje, hora, profilePic);
+                        // Obtener último mensaje
+                        String chatId = getChatId(nutriologoId, pacienteId);
+                        DatabaseReference chatRef = FirebaseDatabase.getInstance()
+                                .getReference()
+                                .child("chats")
+                                .child(chatId)
+                                .child("messages");
+
+                        chatRef.orderByKey().limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                String ultimoMensaje = "";
+                                long timestamp = 0;
+
+                                for (DataSnapshot messageSnap : snapshot.getChildren()) {
+                                    Map<String, Object> message = (Map<String, Object>) messageSnap.getValue();
+                                    if (message != null) {
+                                        ultimoMensaje = (String) message.get("mensaje");
+                                        timestamp = (long) message.get("timestamp");
+                                    }
+                                }
+
+                                // Crear objeto MensajeList
+                                String hora = new SimpleDateFormat("HH:mm", Locale.getDefault())
+                                        .format(new Date(timestamp));
+
+                                MensajeList mensajeItem = new MensajeList(
+                                        pacienteId,
+                                        nombre,
+                                        ultimoMensaje,
+                                        hora,
+                                        profilePic
+                                );
+
+                                // Actualizar UI
+                                updateChatList(mensajeItem);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Log.e("MensajeActivity", "Error loading last message: ", error.toException());
+                            }
+                        });
+                    }
+                });
+    }
+
+    private void updateChatList(MensajeList newMessage) {
+        // Actualizar la lista manteniendo el orden
+        int existingIndex = -1;
+        for (int i = 0; i < mensajeList.size(); i++) {
+            if (mensajeList.get(i).getPacienteId().equals(newMessage.getPacienteId())) {
+                existingIndex = i;
+                break;
+            }
+        }
+
+        if (existingIndex != -1) {
+            mensajeList.set(existingIndex, newMessage);
+        } else {
+            mensajeList.add(newMessage);
+        }
+        Collections.sort(mensajeList, (m1, m2) ->
+                m2.getHora().compareTo(m1.getHora()));
+
+        mensajeAdapter.updateList(mensajeList);
     }
 
     private String getChatId(String nutriologoId, String pacienteId) {

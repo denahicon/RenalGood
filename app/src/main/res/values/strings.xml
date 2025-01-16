@@ -45,6 +45,7 @@
     <string name="texto_reconocido">Texto reconocido: %1$s</string>
     <string name="error_al_reconocer_texto">Error al reconocer texto: %1$s</string>
     <string name="profile_image_desc" />
+    <string name="foto_de_perfil">foto_de_perfil</string>
 
 
     <string-array name="situacion_clinica">

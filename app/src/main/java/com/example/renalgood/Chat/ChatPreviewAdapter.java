@@ -15,7 +15,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.ViewHolder> {
@@ -39,91 +38,14 @@ public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_mensaje, parent, false);
+                .inflate(R.layout.item_chat_preview, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatPreview chat = chats.get(position);
-
-        // Configurar nombre y foto de perfil
-        holder.tvName.setText(chat.getParticipantName());
-        if (chat.getProfilePicUrl() != null && !chat.getProfilePicUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(chat.getProfilePicUrl())
-                    .placeholder(R.drawable.default_profile)
-                    .error(R.drawable.default_profile)
-                    .into(holder.ivProfilePic);
-        }
-
-        // Configurar último mensaje
-        holder.tvLastMessage.setText(chat.getLastMessage());
-
-        // Configurar tiempo
-        holder.tvTime.setText(formatTime(chat.getLastMessageTime()));
-
-        // Si hay mensajes no leídos, mostrar contador
-        if (chat.getUnreadCount() > 0) {
-            holder.tvUnreadCount.setVisibility(View.VISIBLE);
-            holder.tvUnreadCount.setText(String.valueOf(chat.getUnreadCount()));
-        } else {
-            holder.tvUnreadCount.setVisibility(View.GONE);
-        }
-
-        // Mostrar indicador "en línea" si corresponde
-        holder.ivOnlineStatus.setVisibility(chat.isOnline() ? View.VISIBLE : View.GONE);
-
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onChatClick(chat);
-            }
-        });
-    }
-
-    private String formatTime(long timestamp) {
-        if (timestamp == 0) return "";
-
-        Date messageDate = new Date(timestamp);
-        Date now = new Date();
-
-        // Si es hoy, mostrar hora
-        if (isSameDay(messageDate, now)) {
-            return timeFormat.format(messageDate);
-        }
-
-        // Si es ayer
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -1);
-        if (isSameDay(messageDate, calendar.getTime())) {
-            return "Ayer";
-        }
-
-        // Si es de esta semana, mostrar día
-        if (isThisWeek(messageDate)) {
-            return new SimpleDateFormat("EEEE", Locale.getDefault())
-                    .format(messageDate);
-        }
-
-        // Si es más antiguo, mostrar fecha
-        return dateFormat.format(messageDate);
-    }
-
-    private boolean isSameDay(Date date1, Date date2) {
-        Calendar cal1 = Calendar.getInstance();
-        Calendar cal2 = Calendar.getInstance();
-        cal1.setTime(date1);
-        cal2.setTime(date2);
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
-    }
-
-    private boolean isThisWeek(Date date) {
-        Calendar now = Calendar.getInstance();
-        Calendar then = Calendar.getInstance();
-        then.setTime(date);
-        return then.get(Calendar.WEEK_OF_YEAR) == now.get(Calendar.WEEK_OF_YEAR)
-                && then.get(Calendar.YEAR) == now.get(Calendar.YEAR);
+        holder.bind(chat, listener);
     }
 
     @Override
@@ -139,21 +61,88 @@ public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        CircleImageView ivProfilePic;
-        TextView tvName;
-        TextView tvLastMessage;
-        TextView tvTime;
-        TextView tvUnreadCount;
-        View ivOnlineStatus;
+        private final CircleImageView ivProfilePic;
+        private final TextView tvContactName;
+        private final TextView tvLastMessage;
+        private final TextView tvTimestamp;
+        private final TextView tvUnreadCount;
+        private final View ivOnlineStatus;
 
         ViewHolder(View view) {
             super(view);
             ivProfilePic = view.findViewById(R.id.ivProfilePic);
-            tvName = view.findViewById(R.id.tvName);
+            tvContactName = view.findViewById(R.id.tvContactName);
             tvLastMessage = view.findViewById(R.id.tvLastMessage);
-            tvTime = view.findViewById(R.id.tvTime);
+            tvTimestamp = view.findViewById(R.id.tvTimestamp);
             tvUnreadCount = view.findViewById(R.id.tvUnreadCount);
             ivOnlineStatus = view.findViewById(R.id.ivOnlineStatus);
+        }
+
+        void bind(ChatPreview chat, OnChatClickListener listener) {
+            tvContactName.setText(chat.getParticipantName());
+            tvLastMessage.setText(chat.getLastMessage());
+
+            // Cargar imagen de perfil
+            if (chat.getProfilePicUrl() != null && !chat.getProfilePicUrl().isEmpty()) {
+                Glide.with(itemView.getContext())
+                        .load(chat.getProfilePicUrl())
+                        .placeholder(R.drawable.default_profile)
+                        .error(R.drawable.default_profile)
+                        .into(ivProfilePic);
+            } else {
+                ivProfilePic.setImageResource(R.drawable.default_profile);
+            }
+
+            // Configurar timestamp
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy", Locale.getDefault());
+            tvTimestamp.setText(formatTime(chat.getLastMessageTime()));
+
+            // Mostrar contador de mensajes no leídos
+            if (chat.getUnreadCount() > 0) {
+                tvUnreadCount.setVisibility(View.VISIBLE);
+                tvUnreadCount.setText(String.valueOf(chat.getUnreadCount()));
+            } else {
+                tvUnreadCount.setVisibility(View.GONE);
+            }
+
+            // Mostrar indicador de estado en línea
+            ivOnlineStatus.setVisibility(chat.isOnline() ? View.VISIBLE : View.GONE);
+
+            // Click listener
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onChatClick(chat);
+                }
+            });
+        }
+
+        private String formatTime(long timestamp) {
+            if (timestamp == 0) return "";
+
+            Date messageDate = new Date(timestamp);
+            Date now = new Date();
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.DAY_OF_YEAR, -7);
+            Date weekAgo = calendar.getTime();
+
+            if (isSameDay(messageDate, now)) {
+                return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(messageDate);
+            } else if (messageDate.after(weekAgo)) {
+                return new SimpleDateFormat("EEEE", Locale.getDefault()).format(messageDate);
+            } else {
+                return new SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(messageDate);
+            }
+        }
+
+        private boolean isSameDay(Date date1, Date date2) {
+            Calendar cal1 = Calendar.getInstance();
+            Calendar cal2 = Calendar.getInstance();
+            cal1.setTime(date1);
+            cal2.setTime(date2);
+            return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                    cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
         }
     }
 }
