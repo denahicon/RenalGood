@@ -49,6 +49,7 @@
 
 
     <string-array name="situacion_clinica">
+        <item>Situacion Clinica</item>
         <item>ERCA</item>
         <item>Hemodiálisis</item>
         <item>Diálisis peritoneal</item>
@@ -56,11 +57,13 @@
     </string-array>
 
     <string-array name="actividad_fisica">
+        <item>Actividad Física</item>
         <item>Sí</item>
         <item>No</item>
     </string-array>
 
     <string-array name="dias_semana">
+        <item>Dias por semana</item>
         <item>1-3 días</item>
         <item>3-5 días a la semana</item>
         <item>6-7 días a la semana</item>
@@ -68,6 +71,7 @@
     </string-array>
 
     <string-array name="sexo">
+        <item>Sexo</item>
         <item>Hombre</item>
         <item>Mujer</item>
     </string-array>
@@ -80,6 +84,7 @@
 
 
     <string-array name="nivel_creatinina">
+        <item>Nivel de creatinina</item>
         <item>0.6 mg/dL</item>
         <item>0.7 mg/dL</item>
         <item>0.8 mg/dL</item>

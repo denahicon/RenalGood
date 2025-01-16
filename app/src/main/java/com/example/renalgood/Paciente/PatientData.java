@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp;
 import java.util.Date;
 
 public class PatientData {
-    private String id;          // ID del paciente en Firebase
+    private String id;
     private String name;
     private String email;
     private String password;
@@ -19,6 +19,9 @@ public class PatientData {
     private Timestamp registrationDate;
     private double gfr;
     private String ckdStage;
+    private Date fechaVinculacion;
+    private String nutriologoId;
+
 
     public PatientData() {
         this.registrationDate = new Timestamp(new Date());
@@ -134,5 +137,24 @@ public class PatientData {
 
     public String getEstatura() {
         return String.valueOf(height);
+    }
+
+    public Date getFechaVinculacion() {
+        return fechaVinculacion;
+    }
+
+    public void setFechaVinculacion(Date fechaVinculacion) {
+        this.fechaVinculacion = fechaVinculacion;
+    }
+
+    public String getNutriologoId() {
+        return nutriologoId;
+    }
+
+    public void setNutriologoId(String nutriologoId) {
+        this.nutriologoId = nutriologoId;
+    }
+
+    public void setSituacionClinica(String situacionClinica) {
     }
 }

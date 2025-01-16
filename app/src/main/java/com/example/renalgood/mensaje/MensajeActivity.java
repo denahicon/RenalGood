@@ -99,81 +99,107 @@ public class MensajeActivity extends AppCompatActivity {
     }
 
     private void loadPacienteInfo(String pacienteId) {
-        // Obtener información del paciente
-        db.collection("pacientes")
+        // Obtener información del paciente desde la colección "patients"
+        db.collection("patients")
                 .document(pacienteId)
                 .get()
                 .addOnSuccessListener(pacienteDoc -> {
                     if (pacienteDoc.exists()) {
-                        String nombre = pacienteDoc.getString("nombre");
-                        String profilePic = pacienteDoc.getString("profilePic");
+                        // Obtener el nombre y la foto del paciente
+                        String nombre = pacienteDoc.getString("name");
+                        String profilePic = pacienteDoc.getString("selfieUrl");
 
-                        // Obtener último mensaje
-                        String chatId = getChatId(nutriologoId, pacienteId);
-                        DatabaseReference chatRef = FirebaseDatabase.getInstance()
-                                .getReference()
-                                .child("chats")
-                                .child(chatId)
-                                .child("messages");
+                        // Si no se encuentra en "patients", buscar en "pacientes"
+                        if (nombre == null) {
+                            db.collection("pacientes")
+                                    .document(pacienteId)
+                                    .get()
+                                    .addOnSuccessListener(pacienteDoc2 -> {
+                                        if (pacienteDoc2.exists()) {
+                                            String nombreAlt = pacienteDoc2.getString("nombre");
+                                            String profilePicAlt = pacienteDoc2.getString("profilePic");
 
-                        chatRef.orderByKey().limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                String ultimoMensaje = "";
-                                long timestamp = 0;
-
-                                for (DataSnapshot messageSnap : snapshot.getChildren()) {
-                                    Map<String, Object> message = (Map<String, Object>) messageSnap.getValue();
-                                    if (message != null) {
-                                        ultimoMensaje = (String) message.get("mensaje");
-                                        timestamp = (long) message.get("timestamp");
-                                    }
-                                }
-
-                                // Crear objeto MensajeList
-                                String hora = new SimpleDateFormat("HH:mm", Locale.getDefault())
-                                        .format(new Date(timestamp));
-
-                                MensajeList mensajeItem = new MensajeList(
-                                        pacienteId,
-                                        nombre,
-                                        ultimoMensaje,
-                                        hora,
-                                        profilePic
-                                );
-
-                                // Actualizar UI
-                                updateChatList(mensajeItem);
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                Log.e("MensajeActivity", "Error loading last message: ", error.toException());
-                            }
-                        });
+                                            // Obtener último mensaje
+                                            cargarUltimoMensaje(pacienteId, nombreAlt, profilePicAlt);
+                                        }
+                                    });
+                        } else {
+                            // Obtener último mensaje
+                            cargarUltimoMensaje(pacienteId, nombre, profilePic);
+                        }
                     }
-                });
+                })
+                .addOnFailureListener(e -> Log.e("MensajeActivity", "Error loading paciente info: ", e));
+    }
+
+    private void cargarUltimoMensaje(String pacienteId, String nombre, String profilePic) {
+        String chatId = getChatId(nutriologoId, pacienteId);
+        DatabaseReference chatRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("chats")
+                .child(chatId)
+                .child("messages");
+
+        chatRef.orderByKey().limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String ultimoMensaje = "";
+                long timestamp = 0;
+
+                for (DataSnapshot messageSnap : snapshot.getChildren()) {
+                    Map<String, Object> message = (Map<String, Object>) messageSnap.getValue();
+                    if (message != null) {
+                        ultimoMensaje = (String) message.get("mensaje");
+                        timestamp = (long) message.get("timestamp");
+                    }
+                }
+
+                // Crear objeto MensajeList con la información actualizada
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                String hora = timestamp != 0 ? sdf.format(new Date(timestamp)) : "";
+
+                MensajeList mensajeItem = new MensajeList(
+                        pacienteId,
+                        nombre != null ? nombre : "Sin nombre",
+                        ultimoMensaje != null ? ultimoMensaje : "",
+                        hora,
+                        profilePic
+                );
+
+                // Actualizar UI
+                updateChatList(mensajeItem);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("MensajeActivity", "Error loading last message: ", error.toException());
+            }
+        });
     }
 
     private void updateChatList(MensajeList newMessage) {
-        // Actualizar la lista manteniendo el orden
-        int existingIndex = -1;
-        for (int i = 0; i < mensajeList.size(); i++) {
-            if (mensajeList.get(i).getPacienteId().equals(newMessage.getPacienteId())) {
-                existingIndex = i;
-                break;
+        runOnUiThread(() -> {
+            // Actualizar la lista manteniendo el orden
+            int existingIndex = -1;
+            for (int i = 0; i < mensajeList.size(); i++) {
+                if (mensajeList.get(i).getPacienteId().equals(newMessage.getPacienteId())) {
+                    existingIndex = i;
+                    break;
+                }
             }
-        }
 
-        if (existingIndex != -1) {
-            mensajeList.set(existingIndex, newMessage);
-        } else {
-            mensajeList.add(newMessage);
-        }
-        Collections.sort(mensajeList, (m1, m2) ->
-                m2.getHora().compareTo(m1.getHora()));
+            if (existingIndex != -1) {
+                mensajeList.set(existingIndex, newMessage);
+            } else {
+                mensajeList.add(newMessage);
+            }
 
-        mensajeAdapter.updateList(mensajeList);
+            // Ordenar por hora del último mensaje (más reciente primero)
+            Collections.sort(mensajeList, (m1, m2) ->
+                    m2.getHora().compareTo(m1.getHora()));
+
+            mensajeAdapter.updateList(mensajeList);
+        });
     }
 
     private String getChatId(String nutriologoId, String pacienteId) {

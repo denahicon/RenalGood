@@ -240,6 +240,7 @@ public class ChatActivity extends AppCompatActivity {
         chatRoomId = VinculacionManager.getChatId(userId, nutriologoId);
         Log.d(TAG, "Generated chatRoomId: " + chatRoomId);
 
+        loadPatientInfo(); // Añadir esta línea
         setupChat();
     }
 
@@ -394,5 +395,49 @@ public class ChatActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             finish();
         });
+    }
+
+    private void loadPatientInfo() {
+        if (nutriologoId == null) {
+            Log.d(TAG, "nutriologoId es null en loadPatientInfo");
+            return;
+        }
+
+        db.collection("patients")
+                .document(nutriologoId)
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        // Obtener el nombre del paciente
+                        String name = document.getString("name");
+                        String selfieUrl = document.getString("selfieUrl");
+                        String gender = document.getString("gender");
+
+                        // Actualizar el nombre en el TextView
+                        if (binding.nutriologoName != null && name != null) {
+                            binding.nutriologoName.setText(name);
+                        }
+
+                        // Actualizar la imagen de perfil
+                        if (binding.profileImage != null) {
+                            if (selfieUrl != null && !selfieUrl.isEmpty()) {
+                                Glide.with(ChatActivity.this)
+                                        .load(selfieUrl)
+                                        .placeholder(R.drawable.default_profile)
+                                        .error(R.drawable.default_profile)
+                                        .circleCrop()
+                                        .into(binding.profileImage);
+                            } else {
+                                // Si no hay selfieUrl, usar imagen por defecto basada en el género
+                                binding.profileImage.setImageResource(
+                                        gender != null && gender.equals("Hombre") ?
+                                                R.drawable.hombre : R.drawable.mujer
+                                );
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Error cargando datos del paciente: ", e));
     }
 }

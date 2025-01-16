@@ -1,6 +1,7 @@
 package com.example.renalgood.PacientesVinculados;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
@@ -14,6 +15,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -30,42 +32,19 @@ public class PacienteDetalleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_paciente_detalle);
 
+        // Obtener el ID del paciente del Intent
         pacienteId = getIntent().getStringExtra("pacienteId");
         if (pacienteId == null) {
-            Toast.makeText(this, "Error al cargar los datos del paciente", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: ID del paciente no encontrado", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         initializeViews();
         setupToolbar();
-        loadPacienteInfo();
         setupHistorialRecyclerView();
-        loadHistorialAlimenticio();
-    }
-
-    private void initializeViews() {
-        tvNombre = findViewById(R.id.tvNombre);
-        tvEdad = findViewById(R.id.tvEdad);
-        tvSituacionClinica = findViewById(R.id.tvSituacionClinica);
-        tvPeso = findViewById(R.id.tvPeso);
-        tvEstatura = findViewById(R.id.tvEstatura);
-        rvHistorialAlimenticio = findViewById(R.id.rvHistorialAlimenticio);
-        db = FirebaseFirestore.getInstance();
-        historialList = new ArrayList<>();
-    }
-
-    private void setupToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-    }
-
-    private void setupHistorialRecyclerView() {
-        adapter = new HistorialAlimenticioAdapter(historialList);
-        rvHistorialAlimenticio.setLayoutManager(new LinearLayoutManager(this));
-        rvHistorialAlimenticio.setAdapter(adapter);
+        loadPacienteInfo(); // Cargar datos del paciente
+        loadHistorialAlimenticio(); // Cargar historial
     }
 
     private void loadPacienteInfo() {
@@ -74,53 +53,88 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        PatientData paciente = documentSnapshot.toObject(PatientData.class);
-                        if (paciente != null) {
-                            updateUI(paciente);
-                        }
+                        // Obtener los datos directamente del documento
+                        String nombre = documentSnapshot.getString("name");
+                        Long edad = documentSnapshot.getLong("age");
+                        String situacionClinica = documentSnapshot.getString("situacionClinica");
+                        Double peso = documentSnapshot.getDouble("peso");
+                        Double estatura = documentSnapshot.getDouble("estatura");
+
+                        // Actualizar la UI con los datos
+                        if (nombre != null) tvNombre.setText("Nombre: " + nombre);
+                        if (edad != null) tvEdad.setText("Edad: " + edad + " años");
+                        if (situacionClinica != null) tvSituacionClinica.setText("Situación Clínica: " + situacionClinica);
+                        if (peso != null) tvPeso.setText("Peso: " + String.format("%.1f", peso) + " kg");
+                        if (estatura != null) tvEstatura.setText("Estatura: " + String.format("%.1f", estatura) + " cm");
+                    } else {
+                        Toast.makeText(this, "No se encontró información del paciente", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error al cargar la información del paciente",
-                            Toast.LENGTH_SHORT).show();
+                    Log.e("PacienteDetalle", "Error al cargar datos del paciente: " + e.getMessage());
+                    Toast.makeText(this, "Error al cargar la información del paciente", Toast.LENGTH_SHORT).show();
                 });
-    }
-
-    private void updateUI(PatientData paciente) {
-        tvNombre.setText("Nombre: " + paciente.getName());
-        tvEdad.setText("Edad: " + paciente.getAge() + " años");
-        tvSituacionClinica.setText("Situación Clínica: " + paciente.getClinicalSituation());
-        tvPeso.setText("Peso: " + String.format("%.1f", paciente.getWeight()) + " kg");
-        tvEstatura.setText("Estatura: " + paciente.getHeight() + " cm");
     }
 
     private void loadHistorialAlimenticio() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -30);
-        Date treintaDiasAtras = calendar.getTime();
+        historialList.clear();
+        adapter.notifyDataSetChanged();
 
         db.collection("historial_alimenticio")
                 .whereEqualTo("pacienteId", pacienteId)
-                .whereGreaterThan("fecha", treintaDiasAtras)
-                .orderBy("fecha", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        Toast.makeText(this, "Error al cargar el historial",
-                                Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    historialList.clear();
-                    if (value != null) {
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            HistorialAlimenticio historial = doc.toObject(HistorialAlimenticio.class);
-                            if (historial != null) {
-                                historialList.add(historial);
-                            }
+                .get() // Primero obtener todos los registros sin ordenar
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        HistorialAlimenticio historial = document.toObject(HistorialAlimenticio.class);
+                        if (historial != null) {
+                            historial.setId(document.getId());
+                            historialList.add(historial);
                         }
-                        adapter.notifyDataSetChanged();
                     }
+                    // Ordenar la lista localmente
+                    Collections.sort(historialList, (h1, h2) -> h2.getFecha().compareTo(h1.getFecha()));
+                    adapter.notifyDataSetChanged();
+
+                    if (historialList.isEmpty()) {
+                        Toast.makeText(PacienteDetalleActivity.this,
+                                "No hay registros de historial alimenticio", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PacienteDetalle", "Error al cargar historial: " + e.getMessage());
+                    Toast.makeText(PacienteDetalleActivity.this,
+                            "Error al cargar el historial alimenticio", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void initializeViews() {
+        // Inicializar vistas
+        tvNombre = findViewById(R.id.tvNombre);
+        tvEdad = findViewById(R.id.tvEdad);
+        tvSituacionClinica = findViewById(R.id.tvSituacionClinica);
+        tvPeso = findViewById(R.id.tvPeso);
+        tvEstatura = findViewById(R.id.tvEstatura);
+        rvHistorialAlimenticio = findViewById(R.id.rvHistorialAlimenticio);
+
+        // Inicializar Firebase y lista
+        db = FirebaseFirestore.getInstance();
+        historialList = new ArrayList<>();
+    }
+
+    private void setupHistorialRecyclerView() {
+        adapter = new HistorialAlimenticioAdapter(historialList);
+        rvHistorialAlimenticio.setLayoutManager(new LinearLayoutManager(this));
+        rvHistorialAlimenticio.setAdapter(adapter);
+    }
+
+    private void setupToolbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setTitle("Detalle del Paciente");
+        }
     }
 
     @Override

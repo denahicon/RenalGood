@@ -17,6 +17,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import android.content.Intent;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,6 +39,7 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         initializeViews();
         setupNavigationListeners();
         setupFirestore();
+        loadPacientesVinculados();
     }
 
     private void initializeViews() {
@@ -72,26 +75,91 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
         nutriologoId = FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadPacientesVinculados();
+    }
+
     private void loadPacienteInfo(String pacienteId) {
-        db.collection("pacientes")
+        Log.d("PacientesVinculados", "Intentando cargar paciente con ID: " + pacienteId);
+
+        db.collection("patients")
                 .document(pacienteId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    Log.d("PacientesVinculados", "Documento encontrado: " + documentSnapshot.exists());
                     if (documentSnapshot.exists()) {
-                        PatientData paciente = documentSnapshot.toObject(PatientData.class);
-                        if (paciente != null) {
-                            // Agrega log para debug
-                            Log.d("PacientesVinculados", "Paciente cargado: " + paciente.getName());
+                        Map<String, Object> data = documentSnapshot.getData();
+                        Log.d("PacientesVinculados", "Datos completos del documento: " + data);
+
+                        try {
+                            PatientData paciente = new PatientData();
                             paciente.setId(documentSnapshot.getId());
-                            pacientesList.add(paciente);
-                            adapter.notifyDataSetChanged();
+
+                            // Intentamos todos los posibles nombres de campos
+                            String nombre = (String) data.get("nombre");
+                            if (nombre == null) nombre = (String) data.get("name");
+                            if (nombre == null) nombre = (String) data.get("nombre_completo");
+                            Log.d("PacientesVinculados", "Nombre encontrado: " + nombre);
+                            paciente.setName(nombre);
+
+                            // Para la edad
+                            Object edadObj = data.get("edad");
+                            if (edadObj == null) edadObj = data.get("age");
+                            if (edadObj instanceof Long) {
+                                paciente.setAge(((Long) edadObj).intValue());
+                            }
+
+                            // Para la situación clínica
+                            String situacion = (String) data.get("situacionClinica");
+                            if (situacion == null) situacion = (String) data.get("situacion_clinica");
+                            if (situacion == null) situacion = (String) data.get("clinical_situation");
+                            paciente.setSituacionClinica(situacion);
+
+                            if (nombre != null) {
+                                pacientesList.add(paciente);
+                                adapter.notifyDataSetChanged();
+                                Log.d("PacientesVinculados", "Paciente agregado exitosamente: " + nombre);
+                            } else {
+                                Log.e("PacientesVinculados", "No se pudo agregar el paciente - nombre es null");
+                            }
+
+                        } catch (Exception e) {
+                            Log.e("PacientesVinculados", "Error procesando datos: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Log.e("PacientesVinculados", "Documento no encontrado para ID: " + pacienteId);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("PacientesVinculados", "Error cargando paciente: " + e.getMessage());
+                });
+    }
+
+    private void loadPacientesVinculados() {
+        Log.d("PacientesVinculados", "Iniciando carga de pacientes vinculados");
+        pacientesList.clear();
+        adapter.notifyDataSetChanged();
+
+        db.collection("vinculaciones")
+                .whereEqualTo("nutriologoId", nutriologoId)
+                .whereEqualTo("estado", "activo")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    Log.d("PacientesVinculados", "Documentos encontrados: " + querySnapshot.size());
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        String pacienteId = document.getString("pacienteId");
+                        Log.d("PacientesVinculados", "ID de paciente encontrado: " + pacienteId);
+                        if (pacienteId != null) {
+                            loadPacienteInfo(pacienteId);
                         }
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("PacientesVinculados", "Error al cargar paciente: " + e.getMessage());
-                    Toast.makeText(this, "Error al cargar la información del paciente",
-                            Toast.LENGTH_SHORT).show();
+                    Log.e("PacientesVinculados", "Error al cargar vinculaciones: " + e.getMessage());
+                    e.printStackTrace();
                 });
     }
-}
+    }
