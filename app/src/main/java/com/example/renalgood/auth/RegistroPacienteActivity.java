@@ -1,8 +1,10 @@
 package com.example.renalgood.auth;
 
+import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -32,10 +34,8 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     private int currentStep = 0;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-
     private PatientData patientData = new PatientData();
 
-    // Enum para los tipos de input
     private enum FormInputType {
         TEXT_NORMAL,
         TEXT_EMAIL,
@@ -45,7 +45,6 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         SPINNER
     }
 
-    // Clase para manejar los pasos del formulario
     private static class FormStep {
         String question;
         FormInputType inputType;
@@ -64,7 +63,6 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         }
     }
 
-    // Definir pasos del formulario
     private final FormStep[] formSteps = {
             new FormStep("¿Cuál es tu nombre completo?", FormInputType.TEXT_NORMAL),
             new FormStep("¿Cuál es tu correo electrónico?", FormInputType.TEXT_EMAIL),
@@ -112,17 +110,20 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         spDinamico.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (currentStep == 8) { // Paso de actividad física
-                    String selection = parent.getItemAtPosition(position).toString();
-                    if (selection.equals("No")) {
-                        // Si selecciona "No", guardamos los datos y saltamos al paso de sexo
-                        saveCurrentStepData();
-                        currentStep = currentStep + 2; // Saltamos el paso de días por semana
-                        updateUI(currentStep);
-                    }
-                }
+                String selection = parent.getItemAtPosition(position).toString();
 
-                btnSiguiente.setEnabled(position != 0 || currentStep == 6);
+                // Habilitar el botón siguiente para todos los spinners excepto cuando
+                // es la primera opción (que suele ser "Seleccione una opción")
+                btnSiguiente.setEnabled(position != 0);
+
+                if (currentStep == 8 && selection.equals("No")) { // Paso de actividad física
+                    // Si selecciona "No", guardamos los datos actuales
+                    saveCurrentStepData();
+                    patientData.setDaysPerWeek("N/A");
+                    // Saltamos al paso de género
+                    currentStep = 10;
+                    updateUI(currentStep);
+                }
             }
 
             @Override
@@ -134,6 +135,7 @@ public class RegistroPacienteActivity extends AppCompatActivity {
 
     private void updateUI(int step) {
         if (step >= formSteps.length) {
+            Log.d(TAG, "updateUI: Llegamos al final del formulario, iniciando registro");
             registerPatient();
             return;
         }
@@ -150,10 +152,13 @@ public class RegistroPacienteActivity extends AppCompatActivity {
             etDinamico.setVisibility(View.GONE);
             spDinamico.setVisibility(View.VISIBLE);
             setupSpinner(currentStep.spinnerArrayId);
+            // Solo deshabilitar el botón si es la primera opción
+            btnSiguiente.setEnabled(spDinamico.getSelectedItemPosition() != 0);
         } else {
             etDinamico.setVisibility(View.VISIBLE);
             spDinamico.setVisibility(View.GONE);
             configureEditText(currentStep.inputType);
+            btnSiguiente.setEnabled(true);
         }
 
         btnVolver.setVisibility(step > 0 ? View.VISIBLE : View.GONE);
@@ -192,10 +197,18 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     }
 
     private void handleNextStep() {
+        Log.d(TAG, "handleNextStep: Paso actual=" + currentStep + ", Total pasos=" + formSteps.length);
+
         if (validateCurrentStep()) {
             saveCurrentStepData();
-            currentStep++;
-            updateUI(currentStep);
+
+            if (currentStep >= formSteps.length - 1) {
+                Log.d(TAG, "handleNextStep: Último paso completado, iniciando registro");
+                registerPatient();
+            } else {
+                currentStep++;
+                updateUI(currentStep);
+            }
         }
     }
 
@@ -210,7 +223,7 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         FormStep currentFormStep = formSteps[currentStep];
 
         if (currentFormStep.inputType == FormInputType.SPINNER) {
-            return spDinamico.getSelectedItemPosition() != 0 || currentStep == 6;
+            return spDinamico.getSelectedItemPosition() != 0;
         }
 
         String value = etDinamico.getText().toString().trim();
@@ -275,6 +288,8 @@ public class RegistroPacienteActivity extends AppCompatActivity {
             value = etDinamico.getText().toString().trim();
         }
 
+        Log.d(TAG, "saveCurrentStepData: Paso=" + currentStep + ", Valor=" + value);
+
         switch (currentStep) {
             case 0: patientData.setName(value); break;
             case 1: patientData.setEmail(value); break;
@@ -296,15 +311,30 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     }
 
     private void registerPatient() {
+        Log.d(TAG, "registerPatient: Iniciando registro con email=" + patientData.getEmail());
         progressBarLoading.setVisibility(View.VISIBLE);
+        btnSiguiente.setEnabled(false);
+        btnVolver.setEnabled(false);
+
+        // Verificar que tenemos todos los datos necesarios
+        if (patientData.getEmail() == null || patientData.getPassword() == null) {
+            Log.e(TAG, "registerPatient: Datos faltantes email=" + patientData.getEmail());
+            Toast.makeText(this, "Error: Faltan datos necesarios", Toast.LENGTH_LONG).show();
+            progressBarLoading.setVisibility(View.GONE);
+            return;
+        }
 
         mAuth.createUserWithEmailAndPassword(patientData.getEmail(), patientData.getPassword())
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         String userId = task.getResult().getUser().getUid();
+                        Log.d(TAG, "registerPatient: Usuario creado con ID=" + userId);
                         savePatientToFirestore(userId);
                     } else {
+                        Log.e(TAG, "registerPatient: Error en autenticación", task.getException());
                         progressBarLoading.setVisibility(View.GONE);
+                        btnSiguiente.setEnabled(true);
+                        btnVolver.setEnabled(true);
                         Toast.makeText(this, "Error al registrar: " + task.getException().getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
@@ -312,6 +342,8 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     }
 
     private void savePatientToFirestore(String userId) {
+        Log.d(TAG, "savePatientToFirestore: Guardando datos para userId=" + userId);
+
         Map<String, Object> patientMap = new HashMap<>();
         patientMap.put("name", patientData.getName());
         patientMap.put("email", patientData.getEmail());
@@ -324,18 +356,26 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         patientMap.put("daysPerWeek", patientData.getDaysPerWeek());
         patientMap.put("gender", patientData.getGender());
 
+        Log.d(TAG, "savePatientToFirestore: Datos a guardar=" + patientMap.toString());
+
         db.collection("patients")
                 .document(userId)
                 .set(patientMap)
                 .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "savePatientToFirestore: Datos guardados exitosamente");
                     progressBarLoading.setVisibility(View.GONE);
                     Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show();
-                    // Aquí puedes iniciar la siguiente actividad
-                    startActivity(new Intent(this, PacienteActivity.class));
+
+                    Intent intent = new Intent(this, PacienteActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                     finish();
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "savePatientToFirestore: Error al guardar datos", e);
                     progressBarLoading.setVisibility(View.GONE);
+                    btnSiguiente.setEnabled(true);
+                    btnVolver.setEnabled(true);
                     Toast.makeText(this, "Error al guardar datos: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });

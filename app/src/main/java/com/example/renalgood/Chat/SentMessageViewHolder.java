@@ -20,7 +20,7 @@ public class SentMessageViewHolder extends ChatViewHolder {
 
     @Override
     public void bind(ChatMessage message) {
-        messageText.setText(message.getMessage());
+        messageText.setText(message.getMensaje());  // Usando getMensaje() en lugar de getMessage()
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         timeText.setText(sdf.format(new Date(message.getTimestamp())));
     }

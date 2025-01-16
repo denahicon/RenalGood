@@ -75,7 +75,7 @@ public class FirebaseChatManager {
                                     for (DataSnapshot messageSnap : snapshot.getChildren()) {
                                         ChatMessage message = messageSnap.getValue(ChatMessage.class);
                                         if (message != null) {
-                                            lastMessage = message.getMessage();
+                                            lastMessage = message.getMensaje();  // Cambiado de getMessage a getMensaje
                                             lastMessageTime = message.getTimestamp();
                                         }
                                     }

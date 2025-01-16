@@ -65,8 +65,6 @@ public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.
         private final TextView tvContactName;
         private final TextView tvLastMessage;
         private final TextView tvTimestamp;
-        private final TextView tvUnreadCount;
-        private final View ivOnlineStatus;
 
         ViewHolder(View view) {
             super(view);
@@ -74,8 +72,6 @@ public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.
             tvContactName = view.findViewById(R.id.tvContactName);
             tvLastMessage = view.findViewById(R.id.tvLastMessage);
             tvTimestamp = view.findViewById(R.id.tvTimestamp);
-            tvUnreadCount = view.findViewById(R.id.tvUnreadCount);
-            ivOnlineStatus = view.findViewById(R.id.ivOnlineStatus);
         }
 
         void bind(ChatPreview chat, OnChatClickListener listener) {
@@ -94,20 +90,7 @@ public class ChatPreviewAdapter extends RecyclerView.Adapter<ChatPreviewAdapter.
             }
 
             // Configurar timestamp
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy", Locale.getDefault());
             tvTimestamp.setText(formatTime(chat.getLastMessageTime()));
-
-            // Mostrar contador de mensajes no leídos
-            if (chat.getUnreadCount() > 0) {
-                tvUnreadCount.setVisibility(View.VISIBLE);
-                tvUnreadCount.setText(String.valueOf(chat.getUnreadCount()));
-            } else {
-                tvUnreadCount.setVisibility(View.GONE);
-            }
-
-            // Mostrar indicador de estado en línea
-            ivOnlineStatus.setVisibility(chat.isOnline() ? View.VISIBLE : View.GONE);
 
             // Click listener
             itemView.setOnClickListener(v -> {

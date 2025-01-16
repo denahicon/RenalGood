@@ -1,20 +1,15 @@
 package com.example.renalgood.Chat;
 
-import android.icu.text.SimpleDateFormat;
 import android.view.LayoutInflater;
 import android.view.View;  // Añadida esta importación
 import android.view.ViewGroup;
-import android.widget.TextView;
 import androidx.annotation.NonNull;  // Añadida esta importación
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.renalgood.R;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     private List<ChatMessage> messages = new ArrayList<>();
@@ -42,13 +37,18 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatMessage message = messages.get(position);
-        holder.bind(message);
+        if (message != null) {
+            holder.bind(message);
+        }
     }
 
     @Override
     public int getItemViewType(int position) {
         ChatMessage message = messages.get(position);
-        return message.getSenderId().equals(currentUserId) ? VIEW_TYPE_SENT : VIEW_TYPE_RECEIVED;
+        if (message != null && message.getEmisorId() != null) {
+            return message.getEmisorId().equals(currentUserId) ? VIEW_TYPE_SENT : VIEW_TYPE_RECEIVED;
+        }
+        return VIEW_TYPE_RECEIVED; // Default fallback
     }
 
     @Override
@@ -57,12 +57,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatViewHolder> {
     }
 
     public void addMessage(ChatMessage message) {
-        messages.add(message);
-        notifyItemInserted(messages.size() - 1);
+        if (message != null) {
+            messages.add(message);
+            notifyItemInserted(messages.size() - 1);
+        }
     }
 
     public void setMessages(List<ChatMessage> newMessages) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new MessageDiffCallback(messages, newMessages));
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new MessageDiffCallback(messages, newMessages));
         messages = new ArrayList<>(newMessages);
         diffResult.dispatchUpdatesTo(this);
     }

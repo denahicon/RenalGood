@@ -13,10 +13,14 @@ public class MessageDiffCallback extends DiffUtil.Callback {
     }
 
     @Override
-    public int getOldListSize() { return oldMessages.size(); }
+    public int getOldListSize() {
+        return oldMessages.size();
+    }
 
     @Override
-    public int getNewListSize() { return newMessages.size(); }
+    public int getNewListSize() {
+        return newMessages.size();
+    }
 
     @Override
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
@@ -28,7 +32,7 @@ public class MessageDiffCallback extends DiffUtil.Callback {
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
         ChatMessage oldMessage = oldMessages.get(oldItemPosition);
         ChatMessage newMessage = newMessages.get(newItemPosition);
-        return oldMessage.getMessage().equals(newMessage.getMessage())
+        return oldMessage.getMensaje().equals(newMessage.getMensaje())  // Cambiado de getMessage a getMensaje
                 && oldMessage.getTimestamp() == newMessage.getTimestamp();
     }
 }
