@@ -13,7 +13,6 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
 import com.example.renalgood.Nutriologo.NutriologoActivity
 import com.example.renalgood.Paciente.PacienteActivity
 import com.example.renalgood.auth.AdminLoginActivity
@@ -23,8 +22,6 @@ import com.example.renalgood.auth.RegistroPacienteActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
 
 private const val TAG = "MainActivity"
 
@@ -39,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
     private lateinit var eyeIcon: ImageView
     private var isPasswordVisible = false
+    private val userCache = mutableMapOf<String, Pair<String, Long>>()
+    private val CACHE_DURATION = 5 * 60 * 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +47,11 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         setupSpinner()
         setupClickListeners()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        userCache.clear()
     }
 
     private fun initializeFirebase() {
@@ -152,32 +156,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun verificarTipoUsuario(userId: String) {
-        db.collection("nutriologos")
-            .document(userId)
-            .get()
-            .addOnSuccessListener { nutriDoc ->
-                if (nutriDoc.exists()) {
-                    val estado = nutriDoc.getString("estado") ?: ""
-                    val verificado = nutriDoc.getBoolean("verificado") ?: false
-
-                    when {
-                        verificado && (estado == "aprobado" || estado == "activo") -> {
-                            // Aceptar ambos estados por compatibilidad
-                            irANutriologo()
-                        }
-                        !verificado -> {
-                            Toast.makeText(this, "Tu cuenta está pendiente de verificación", Toast.LENGTH_LONG).show()
-                            mAuth.signOut()
-                        }
-                        else -> {
-                            Toast.makeText(this, "Tu cuenta no está aprobada", Toast.LENGTH_LONG).show()
-                            mAuth.signOut()
-                        }
-                    }
-                } else {
-                    verificarOtrosTiposUsuario(userId)
+        // Verificar cache primero
+        userCache[userId]?.let { (tipo, timestamp) ->
+            if (System.currentTimeMillis() - timestamp < CACHE_DURATION) {
+                when (tipo) {
+                    "nutriologo" -> irANutriologo()
+                    "paciente" -> irAPaciente()
+                    "admin" -> irAPanelAdmin()
+                    else -> verificarEnFirestore(userId)
                 }
+                return
             }
+        }
+
+        verificarEnFirestore(userId)
     }
 
     private fun verificarOtrosTiposUsuario(userId: String) {
@@ -204,25 +196,72 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun verificarPacienteNutriologo(userId: String) {
-        db.collection("patients").document(userId).get()
-            .addOnSuccessListener { patientDoc ->
-                if (patientDoc.exists()) {
-                    actualizarTipoUsuario(userId, "Paciente")
-                } else {
-                    db.collection("nutriologos").document(userId).get()
-                        .addOnSuccessListener { nutriDoc ->
-                            if (nutriDoc.exists()) {
-                                // Verificar el estado del nutriólogo antes de actualizar
-                                verificarEstadoNutriologo(userId)
-                            } else {
-                                Log.e(TAG, "Usuario no encontrado en ninguna colección")
-                                Toast.makeText(this, "Error: Usuario no encontrado", Toast.LENGTH_SHORT).show()
-                                mAuth.signOut()
-                            }
+    private fun verificarEnFirestore(userId: String) {
+        // Crear batch de consultas
+        val nutriologoRef = db.collection("nutriologos").document(userId)
+        val pacienteRef = db.collection("patients").document(userId)
+        val adminRef = db.collection("admins").document(userId)
+
+        db.runTransaction { transaction ->
+            val nutriDoc = transaction.get(nutriologoRef)
+
+            if (nutriDoc.exists()) {
+                val estado = nutriDoc.getString("estado") ?: ""
+                val verificado = nutriDoc.getBoolean("verificado") ?: false
+
+                when {
+                    verificado && (estado == "aprobado" || estado == "activo") -> {
+                        // Guardar en cache
+                        userCache[userId] = "nutriologo" to System.currentTimeMillis()
+                        runOnUiThread { irANutriologo() }
+                    }
+                    !verificado -> {
+                        runOnUiThread {
+                            Toast.makeText(this, "Tu cuenta está pendiente de verificación",
+                                Toast.LENGTH_LONG).show()
+                            mAuth.signOut()
                         }
+                    }
+                    else -> {
+                        runOnUiThread {
+                            Toast.makeText(this, "Tu cuenta no está aprobada",
+                                Toast.LENGTH_LONG).show()
+                            mAuth.signOut()
+                        }
+                    }
                 }
+                return@runTransaction
             }
+
+            // Si no es nutriólogo, verificar paciente
+            val patientDoc = transaction.get(pacienteRef)
+            if (patientDoc.exists()) {
+                userCache[userId] = "paciente" to System.currentTimeMillis()
+                runOnUiThread { irAPaciente() }
+                return@runTransaction
+            }
+
+            // Si no es paciente, verificar admin
+            val adminDoc = transaction.get(adminRef)
+            if (adminDoc.exists()) {
+                userCache[userId] = "admin" to System.currentTimeMillis()
+                runOnUiThread { irAPanelAdmin() }
+                return@runTransaction
+            }
+
+            // Si no existe en ninguna colección
+            runOnUiThread {
+                Log.e(TAG, "Usuario no encontrado en ninguna colección")
+                Toast.makeText(this, "Error: Usuario no encontrado",
+                    Toast.LENGTH_SHORT).show()
+                mAuth.signOut()
+            }
+        }.addOnFailureListener { e ->
+            Log.e(TAG, "Error en verificación", e)
+            Toast.makeText(this, "Error de verificación: ${e.message}",
+                Toast.LENGTH_SHORT).show()
+            mAuth.signOut()
+        }
     }
 
     private fun actualizarTipoUsuario(userId: String, tipoUsuario: String) {
@@ -271,6 +310,13 @@ class MainActivity : AppCompatActivity() {
                     FirebaseAuth.getInstance().signOut()
                 }
             }
+    }
+
+    private fun limpiarCacheExpirado() {
+        val currentTime = System.currentTimeMillis()
+        userCache.entries.removeAll { (_, value) ->
+            currentTime - value.second > CACHE_DURATION
+        }
     }
 
     private fun irAPanelAdmin() {

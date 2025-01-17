@@ -4,18 +4,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import com.example.renalgood.Chat.ChatActivity;
 import com.example.renalgood.agendarcitap.CalendarioActivity;
 import com.example.renalgood.historial.HistorialActivity;
@@ -25,12 +26,13 @@ import com.example.renalgood.recetas.RecetasActivity;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.common.reflect.TypeToken;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.gson.Gson;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
-
+import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -50,12 +52,22 @@ public class PacienteActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private NutrientCalculations calculator;
     private boolean isActivityActive = false;
+    private static final String PATIENT_CACHE_KEY = "patient_data_";
+    private static final String LAST_UPDATE_KEY = "last_update";
+    private static final long CACHE_DURATION = 1000 * 60 * 30;
+    private SharedPreferences prefs;
+    private Handler uiHandler = new Handler();
+    private Runnable progressUpdateRunnable;
+    private long lastCheckedTimestamp = 0;
+    private static final String TAG = "PacienteActivity";
+    private static final Gson gson = new Gson();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_paciente);
         isActivityActive = true;
+        prefs = getSharedPreferences("patient_prefs", MODE_PRIVATE);
 
         initializeViews();
         initializeFirebase();
@@ -122,16 +134,104 @@ public class PacienteActivity extends AppCompatActivity {
 
     private void loadPatientData() {
         String userId = mAuth.getCurrentUser().getUid();
-        db.collection("patients").document(userId)
+        if (userId == null) return;
+
+        String cachedData = prefs.getString(PATIENT_CACHE_KEY + userId, null);
+        long lastCacheUpdate = prefs.getLong(PATIENT_CACHE_KEY + userId + "_time", 0);
+
+        if (cachedData != null && System.currentTimeMillis() - lastCacheUpdate < CACHE_DURATION) {
+            try {
+                Map<String, Object> data = deserializeSnapshot(cachedData);
+                updateUI(data);  // Modificar updateUI para aceptar Map<String, Object>
+                return;
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading cached data", e);
+            }
+        }
+
+        db.collection("patients")
+                .document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        updateUI(documentSnapshot);
+                        Map<String, Object> data = documentSnapshot.getData();
+                        if (data != null) {
+                            // Guardar en cache
+                            prefs.edit()
+                                    .putString(PATIENT_CACHE_KEY + userId, gson.toJson(data))
+                                    .putLong(PATIENT_CACHE_KEY + userId + "_time", System.currentTimeMillis())
+                                    .apply();
+
+                            updateUI(data);
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Manejar error de carga de datos
+                    Log.e(TAG, "Error loading patient data", e);
+                    Toast.makeText(this, "Error cargando datos", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private String serializeSnapshot(DocumentSnapshot snapshot) {
+        try {
+            Map<String, Object> data = snapshot.getData();
+            if (data != null) {
+                return gson.toJson(data);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error serializing snapshot", e);
+        }
+        return "{}";
+    }
+
+    private Map<String, Object> deserializeSnapshot(String cached) {
+        try {
+            Type type = new TypeToken<Map<String, Object>>(){}.getType();
+            Map<String, Object> data = gson.fromJson(cached, type);
+            return data != null ? data : new HashMap<>();
+        } catch (Exception e) {
+            Log.e(TAG, "Error deserializing snapshot", e);
+            return new HashMap<>();
+        }
+    }
+
+    private void updateUI(Map<String, Object> data) {
+        try {
+            String name = (String) data.get("name");
+            Number age = (Number) data.get("age");
+            String clinicalSituation = (String) data.get("clinicalSituation");
+            Number weight = (Number) data.get("weight");
+            Number height = (Number) data.get("height");
+
+            if (name != null) tvNombrePaciente.setText(name);
+            if (age != null) chipEdad.setText(age.intValue() + " años");
+            if (weight != null) chipPeso.setText(weight.doubleValue() + " kg");
+            if (height != null) chipAltura.setText(height.intValue() + " cm");
+            if (clinicalSituation != null) tvSituacionClinica.setText("Situación: " + clinicalSituation);
+
+            // Calcular y mostrar GFR si es necesario
+            calcularYMostrarGFR(data);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating UI", e);
+        }
+    }
+
+    private void calcularYMostrarGFR(Map<String, Object> data) {
+        try {
+            String gender = (String) data.get("gender");
+            Number age = (Number) data.get("age");
+            String creatinine = (String) data.get("creatinine");
+
+            if (gender != null && age != null && creatinine != null) {
+                boolean isMale = gender.equals("Hombre");
+                double creatinineValue = Double.parseDouble(creatinine.split(" ")[0]);
+                double gfr = calculator.calculateGFR(isMale, age.intValue(), creatinineValue, false);
+                tvGFR.setText(String.format("GFR: %.2f mL/min/1.73m²", gfr));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error calculating GFR", e);
+        }
     }
 
     private void updateUI(DocumentSnapshot document) {
@@ -197,10 +297,26 @@ public class PacienteActivity extends AppCompatActivity {
                 .registerReceiver(caloriesUpdateReceiver, new IntentFilter("UPDATE_CALORIES_PROGRESS"));
     }
 
-    private void updateCaloriesProgress(int consumedCalories) {
-        tvCaloriasValue.setText(String.format("%d\nkcal", consumedCalories));
-        int progress = (int) ((consumedCalories / maxCalories) * 100);
-        progressCalorias.setProgress(Math.min(progress, 100));
+    private void updateCaloriesProgress(final int consumedCalories) {
+        // Cancelar actualización pendiente
+        if (progressUpdateRunnable != null) {
+            uiHandler.removeCallbacks(progressUpdateRunnable);
+        }
+
+        // Crear nueva actualización con debounce
+        progressUpdateRunnable = () -> {
+            if (tvCaloriasValue != null) {
+                tvCaloriasValue.setText(String.format("%d\nkcal", Math.max(0, consumedCalories)));
+            }
+
+            if (progressCalorias != null && maxCalories > 0) {
+                int progress = (int) (((float)Math.max(0, consumedCalories) / maxCalories) * 100);
+                progressCalorias.setProgress(Math.min(progress, 100));
+            }
+        };
+
+        // Ejecutar después de un pequeño delay para debouncing
+        uiHandler.postDelayed(progressUpdateRunnable, 150);
     }
 
     private void actualizarIndicadorNotificaciones() {
@@ -249,32 +365,36 @@ public class PacienteActivity extends AppCompatActivity {
     }
 
     private void checkDayChange() {
+        // Evitar checks frecuentes
+        if (System.currentTimeMillis() - lastCheckedTimestamp < 60000) { // 1 minuto
+            return;
+        }
+        lastCheckedTimestamp = System.currentTimeMillis();
+
         String userId = mAuth.getCurrentUser().getUid();
-        DocumentReference userRef = db.collection("usuarios").document(userId);
+        if (userId == null) return;
 
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            Timestamp lastUpdate = documentSnapshot.getTimestamp("lastUpdate");
-            if (lastUpdate != null) {
-                Calendar lastUpdateCal = Calendar.getInstance();
-                lastUpdateCal.setTime(lastUpdate.toDate());
+        // Verificar último update desde SharedPreferences
+        long lastUpdate = prefs.getLong(LAST_UPDATE_KEY + userId, 0);
+        if (lastUpdate == 0) {
+            updateLastUpdate(userId);
+            return;
+        }
 
-                Calendar currentCal = Calendar.getInstance();
+        // Verificar si es un nuevo día
+        if (isNewDay(lastUpdate)) {
+            resetDailyCalories(userId);
+        }
+    }
 
-                boolean isDifferentDay =
-                        lastUpdateCal.get(Calendar.DAY_OF_YEAR) != currentCal.get(Calendar.DAY_OF_YEAR) ||
-                                lastUpdateCal.get(Calendar.YEAR) != currentCal.get(Calendar.YEAR);
+    private boolean isNewDay(long lastUpdate) {
+        Calendar last = Calendar.getInstance();
+        last.setTimeInMillis(lastUpdate);
 
-                if (isDifferentDay) {
-                    // Reiniciar calorías para el nuevo día
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("caloriasDiarias", 0);
-                    updates.put("lastUpdate", new Timestamp(new Date()));
+        Calendar current = Calendar.getInstance();
 
-                    userRef.update(updates)
-                            .addOnSuccessListener(aVoid -> updateCaloriesProgress(0));
-                }
-            }
-        });
+        return last.get(Calendar.DAY_OF_YEAR) != current.get(Calendar.DAY_OF_YEAR) ||
+                last.get(Calendar.YEAR) != current.get(Calendar.YEAR);
     }
 
     private void mostrarNotificaciones(List<DocumentSnapshot> notificaciones) {
@@ -362,5 +482,26 @@ public class PacienteActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             finish();
         });
+    }
+
+    private void resetDailyCalories(String userId) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("caloriasDiarias", 0);
+        updates.put("lastUpdate", new Timestamp(new Date()));
+
+        db.collection("usuarios")
+                .document(userId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    updateLastUpdate(userId);
+                    updateCaloriesProgress(0);
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error resetting calories", e));
+    }
+
+    private void updateLastUpdate(String userId) {
+        prefs.edit()
+                .putLong(LAST_UPDATE_KEY + userId, System.currentTimeMillis())
+                .apply();
     }
 }

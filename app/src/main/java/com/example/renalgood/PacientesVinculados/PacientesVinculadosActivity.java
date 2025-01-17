@@ -3,22 +3,21 @@ package com.example.renalgood.PacientesVinculados;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.example.renalgood.Nutriologo.NavigationHelper;
 import com.example.renalgood.Nutriologo.PacientesAdapter;
 import com.example.renalgood.Paciente.PatientData;
 import com.example.renalgood.R;
-import com.example.renalgood.mensaje.MensajeDetalleActivity;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-
 import android.content.Intent;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -82,60 +81,79 @@ public class PacientesVinculadosActivity extends AppCompatActivity {
     }
 
     private void loadPacienteInfo(String pacienteId) {
-        Log.d("PacientesVinculados", "Intentando cargar paciente con ID: " + pacienteId);
+        Log.d("PacientesVinculados", "Iniciando carga de paciente: " + pacienteId);
 
-        db.collection("patients")
+        // Crear las tareas para obtener datos del paciente y su vinculación
+        Task<DocumentSnapshot> patientTask = db.collection("patients")
                 .document(pacienteId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    Log.d("PacientesVinculados", "Documento encontrado: " + documentSnapshot.exists());
-                    if (documentSnapshot.exists()) {
-                        Map<String, Object> data = documentSnapshot.getData();
-                        Log.d("PacientesVinculados", "Datos completos del documento: " + data);
+                .get();
 
-                        try {
-                            PatientData paciente = new PatientData();
-                            paciente.setId(documentSnapshot.getId());
+        Task<QuerySnapshot> vinculacionTask = db.collection("vinculaciones")
+                .whereEqualTo("pacienteId", pacienteId)
+                .whereEqualTo("estado", "activo")
+                .limit(1)
+                .get();
 
-                            // Intentamos todos los posibles nombres de campos
-                            String nombre = (String) data.get("nombre");
-                            if (nombre == null) nombre = (String) data.get("name");
-                            if (nombre == null) nombre = (String) data.get("nombre_completo");
-                            Log.d("PacientesVinculados", "Nombre encontrado: " + nombre);
-                            paciente.setName(nombre);
+        // Ejecutar ambas tareas en paralelo
+        Tasks.whenAllSuccess(patientTask, vinculacionTask)
+                .addOnSuccessListener(results -> {
+                    DocumentSnapshot patientDoc = (DocumentSnapshot) results.get(0);
+                    QuerySnapshot vinculacionDocs = (QuerySnapshot) results.get(1);
 
-                            // Para la edad
-                            Object edadObj = data.get("edad");
-                            if (edadObj == null) edadObj = data.get("age");
-                            if (edadObj instanceof Long) {
-                                paciente.setAge(((Long) edadObj).intValue());
-                            }
+                    if (!patientDoc.exists()) {
+                        Log.e("PacientesVinculados", "Documento del paciente no encontrado");
+                        return;
+                    }
 
-                            // Para la situación clínica
-                            String situacion = (String) data.get("situacionClinica");
-                            if (situacion == null) situacion = (String) data.get("situacion_clinica");
-                            if (situacion == null) situacion = (String) data.get("clinical_situation");
-                            paciente.setSituacionClinica(situacion);
+                    try {
+                        PatientData paciente = new PatientData();
+                        paciente.setId(patientDoc.getId());
 
-                            if (nombre != null) {
-                                pacientesList.add(paciente);
-                                adapter.notifyDataSetChanged();
-                                Log.d("PacientesVinculados", "Paciente agregado exitosamente: " + nombre);
-                            } else {
-                                Log.e("PacientesVinculados", "No se pudo agregar el paciente - nombre es null");
-                            }
-
-                        } catch (Exception e) {
-                            Log.e("PacientesVinculados", "Error procesando datos: " + e.getMessage());
-                            e.printStackTrace();
+                        // Obtener nombre usando las alternativas
+                        String nombre = null;
+                        for (String field : Arrays.asList("name", "nombre", "nombre_completo")) {
+                            nombre = patientDoc.getString(field);
+                            if (nombre != null) break;
                         }
-                    } else {
-                        Log.e("PacientesVinculados", "Documento no encontrado para ID: " + pacienteId);
+
+                        if (nombre == null) {
+                            Log.e("PacientesVinculados", "Nombre no encontrado en el documento");
+                            return;
+                        }
+                        paciente.setName(nombre);
+
+                        // Obtener edad
+                        Long edad = null;
+                        for (String field : Arrays.asList("age", "edad")) {
+                            edad = patientDoc.getLong(field);
+                            if (edad != null) break;
+                        }
+                        if (edad != null) {
+                            paciente.setAge(edad.intValue());
+                        }
+
+                        // Obtener situación clínica
+                        String situacion = null;
+                        for (String field : Arrays.asList("clinicalSituation", "situacion_clinica", "situacionClinica")) {
+                            situacion = patientDoc.getString(field);
+                            if (situacion != null) break;
+                        }
+                        paciente.setSituacionClinica(situacion);
+
+                        // Verificar vinculación activa
+                        if (!vinculacionDocs.isEmpty()) {
+                            pacientesList.add(paciente);
+                            adapter.notifyDataSetChanged();
+                            Log.d("PacientesVinculados",
+                                    String.format("Paciente agregado: %s, ID: %s", nombre, pacienteId));
+                        }
+
+                    } catch (Exception e) {
+                        Log.e("PacientesVinculados", "Error procesando datos: " + e.getMessage(), e);
                     }
                 })
-                .addOnFailureListener(e -> {
-                    Log.e("PacientesVinculados", "Error cargando paciente: " + e.getMessage());
-                });
+                .addOnFailureListener(e ->
+                        Log.e("PacientesVinculados", "Error en carga de datos: " + e.getMessage(), e));
     }
 
     private void loadPacientesVinculados() {

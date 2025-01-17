@@ -21,6 +21,7 @@ import com.example.renalgood.databinding.ActivityChatBinding;
 import com.example.renalgood.recetas.RecetasActivity;
 import com.example.renalgood.vinnutriologo.NutriologosListActivity;
 import com.example.renalgood.vinnutriologo.VinculacionManager;
+import com.google.common.reflect.TypeToken;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -35,9 +36,15 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import de.hdodenhof.circleimageview.CircleImageView;
+import android.content.SharedPreferences;
+import com.google.gson.Gson;
+import com.google.firebase.database.Query;
 
 public class ChatActivity extends AppCompatActivity {
     private static final String TAG = "ChatActivity";
@@ -48,15 +55,21 @@ public class ChatActivity extends AppCompatActivity {
     private String nutriologoId;
     private String chatRoomId;
     private ImageView ivHome, ivLupa, ivChef, ivMensaje, ivCarta, ivCalendario;
+    private ChildEventListener messagesListener;
+    private SharedPreferences prefs;
+    private Gson gson;
+    private static final int MESSAGE_LIMIT = 50;
+    private static final long CACHE_DURATION = 1000 * 60 * 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        prefs = getSharedPreferences("chat_prefs", MODE_PRIVATE);
+        gson = new Gson();
 
         setupUI();
         initNavigationViews();
@@ -68,6 +81,19 @@ public class ChatActivity extends AppCompatActivity {
             setupChatHeader();
         } else {
             checkVinculacion();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (messagesListener != null) {
+            DatabaseReference baseRef = FirebaseDatabase.getInstance()
+                    .getReference()
+                    .child("chats")
+                    .child(chatRoomId)
+                    .child("messages");
+            baseRef.removeEventListener(messagesListener);
         }
     }
 
@@ -245,25 +271,47 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void setupChat() {
+        if (chatRoomId == null) {
+            Log.e(TAG, "ChatRoomId is null");
+            return;
+        }
+
+        // Configurar RecyclerView
         mAdapter = new ChatAdapter();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         binding.recyclerChat.setLayoutManager(layoutManager);
         binding.recyclerChat.setAdapter(mAdapter);
 
-        DatabaseReference chatRef = FirebaseDatabase.getInstance()
+        // Cargar mensajes en cache primero
+        loadCachedMessages();
+
+        // Obtener referencia base
+        DatabaseReference baseRef = FirebaseDatabase.getInstance()
                 .getReference()
                 .child("chats")
                 .child(chatRoomId)
                 .child("messages");
 
-        chatRef.addChildEventListener(new ChildEventListener() {
+        // Configurar query con límite
+        Query chatQuery = baseRef.limitToLast(MESSAGE_LIMIT);
+
+        // Crear listener para nuevos mensajes
+        messagesListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, String previousChildName) {
-                ChatMessage message = snapshot.getValue(ChatMessage.class);
-                if (message != null) {
-                    mAdapter.addMessage(message);
-                    binding.recyclerChat.smoothScrollToPosition(mAdapter.getItemCount() - 1);
+                try {
+                    ChatMessage message = snapshot.getValue(ChatMessage.class);
+                    if (message != null) {
+                        // Guardar mensaje en cache
+                        saveMessageToCache(message);
+
+                        // Actualizar UI
+                        mAdapter.addMessage(message);
+                        smoothScrollToBottom();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error processing message", e);
                 }
             }
 
@@ -280,7 +328,66 @@ public class ChatActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "Error en chatRef: " + error.getMessage());
             }
-        });
+        };
+
+        // Agregar listener a la query
+        chatQuery.addChildEventListener(messagesListener);
+    }
+
+    private void loadCachedMessages() {
+        String cachedMessages = prefs.getString("chat_" + chatRoomId, null);
+        if (cachedMessages != null) {
+            try {
+                Type listType = new TypeToken<ArrayList<ChatMessage>>() {}.getType();
+                List<ChatMessage> messages = gson.fromJson(cachedMessages, listType);
+                if (messages != null) {
+                    for (ChatMessage message : messages) {
+                        mAdapter.addMessage(message);
+                    }
+                    smoothScrollToBottom();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading cached messages", e);
+            }
+        }
+    }
+
+    private void saveMessageToCache(ChatMessage message) {
+        try {
+            List<ChatMessage> cachedMessages = getCachedMessages();
+            cachedMessages.add(message);
+            while (cachedMessages.size() > MESSAGE_LIMIT) {
+                cachedMessages.remove(0);
+            }
+            String json = gson.toJson(cachedMessages);
+            prefs.edit().putString("chat_" + chatRoomId, json).apply();
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving message to cache", e);
+        }
+    }
+
+    private List<ChatMessage> getCachedMessages() {
+        String cachedMessages = prefs.getString("chat_" + chatRoomId, null);
+        if (cachedMessages != null) {
+            try {
+                Type listType = new TypeToken<ArrayList<ChatMessage>>() {}.getType();
+                List<ChatMessage> messages = gson.fromJson(cachedMessages, listType);
+                if (messages != null) {
+                    return messages;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting cached messages", e);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    private void smoothScrollToBottom() {
+        if (binding.recyclerChat != null && mAdapter.getItemCount() > 0) {
+            binding.recyclerChat.post(() ->
+                    binding.recyclerChat.smoothScrollToPosition(mAdapter.getItemCount() - 1)
+            );
+        }
     }
 
     private void sendMessage(String messageText) {
@@ -403,41 +510,70 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        // Intentar cargar datos en cache primero
+        String cachedInfo = prefs.getString("patient_" + nutriologoId, null);
+        long lastUpdate = prefs.getLong("patient_update_" + nutriologoId, 0);
+
+        if (cachedInfo != null && System.currentTimeMillis() - lastUpdate < CACHE_DURATION) {
+            try {
+                Type type = new TypeToken<Map<String, String>>() {}.getType();
+                Map<String, String> patientInfo = gson.fromJson(cachedInfo, type);
+                updatePatientUI(patientInfo);
+                return;
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading cached patient info", e);
+            }
+        }
+
+        // Cargar de Firestore si no hay cache o está expirado
         db.collection("patients")
                 .document(nutriologoId)
                 .get()
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
-                        // Obtener el nombre del paciente
-                        String name = document.getString("name");
-                        String selfieUrl = document.getString("selfieUrl");
-                        String gender = document.getString("gender");
+                        Map<String, String> patientInfo = new HashMap<>();
+                        patientInfo.put("name", document.getString("name"));
+                        patientInfo.put("selfieUrl", document.getString("selfieUrl"));
+                        patientInfo.put("gender", document.getString("gender"));
 
-                        // Actualizar el nombre en el TextView
-                        if (binding.nutriologoName != null && name != null) {
-                            binding.nutriologoName.setText(name);
-                        }
+                        // Guardar en cache
+                        String json = gson.toJson(patientInfo);
+                        prefs.edit()
+                                .putString("patient_" + nutriologoId, json)
+                                .putLong("patient_update_" + nutriologoId, System.currentTimeMillis())
+                                .apply();
 
-                        // Actualizar la imagen de perfil
-                        if (binding.profileImage != null) {
-                            if (selfieUrl != null && !selfieUrl.isEmpty()) {
-                                Glide.with(ChatActivity.this)
-                                        .load(selfieUrl)
-                                        .placeholder(R.drawable.default_profile)
-                                        .error(R.drawable.default_profile)
-                                        .circleCrop()
-                                        .into(binding.profileImage);
-                            } else {
-                                // Si no hay selfieUrl, usar imagen por defecto basada en el género
-                                binding.profileImage.setImageResource(
-                                        gender != null && gender.equals("Hombre") ?
-                                                R.drawable.hombre : R.drawable.mujer
-                                );
-                            }
-                        }
+                        updatePatientUI(patientInfo);
                     }
                 })
-                .addOnFailureListener(e ->
-                        Log.e(TAG, "Error cargando datos del paciente: ", e));
+                .addOnFailureListener(e -> Log.e(TAG, "Error cargando datos del paciente: ", e));
+    }
+
+    private void updatePatientUI(Map<String, String> patientInfo) {
+        if (!isFinishing() && binding != null) {
+            String name = patientInfo.get("name");
+            String selfieUrl = patientInfo.get("selfieUrl");
+            String gender = patientInfo.get("gender");
+
+            if (binding.nutriologoName != null && name != null) {
+                binding.nutriologoName.setText(name);
+            }
+
+            if (binding.profileImage != null) {
+                if (selfieUrl != null && !selfieUrl.isEmpty()) {
+                    Glide.with(ChatActivity.this)
+                            .load(selfieUrl)
+                            .placeholder(R.drawable.default_profile)
+                            .error(R.drawable.default_profile)
+                            .circleCrop()
+                            .into(binding.profileImage);
+                } else {
+                    binding.profileImage.setImageResource(
+                            gender != null && gender.equals("Hombre") ?
+                                    R.drawable.hombre : R.drawable.mujer
+                    );
+                }
+            }
+        }
     }
 }
