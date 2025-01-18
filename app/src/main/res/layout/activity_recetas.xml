@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,7 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:text="Recetas Saludables"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:fontFamily="@font/tipo1"
             android:textStyle="bold"
             android:textColor="#000000" />
@@ -28,7 +29,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
             android:text="Recetas para el desayuno"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:fontFamily="@font/tipo2"
             android:textColor="#666666" />
     </LinearLayout>
@@ -36,11 +37,14 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewRecetas"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_below="@id/headerLayout"
         android:layout_above="@id/navigationBar"
-        android:layout_margin="8dp"
-        android:padding="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:clipToPadding="false"
         android:background="@android:color/white" />
 
     <ProgressBar
@@ -58,12 +62,13 @@
         android:orientation="horizontal"
         android:weightSum="6"
         android:gravity="center"
-        android:background="@color/white">
+        android:background="@color/white"
+        android:elevation="8dp">
 
         <ImageView
             android:id="@+id/ivHome"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_home" />
@@ -71,7 +76,7 @@
         <ImageView
             android:id="@+id/ivLupa"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_search" />
@@ -79,7 +84,7 @@
         <ImageView
             android:id="@+id/ivChef"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_menu" />
@@ -87,7 +92,7 @@
         <ImageView
             android:id="@+id/ivMensaje"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_message" />
@@ -95,7 +100,7 @@
         <ImageView
             android:id="@+id/ivCarta"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_email" />
@@ -103,7 +108,7 @@
         <ImageView
             android:id="@+id/ivCalendario"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_calendar" />
