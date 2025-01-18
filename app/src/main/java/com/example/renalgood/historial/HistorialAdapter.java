@@ -4,22 +4,28 @@ import android.icu.text.SimpleDateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class HistorialAdapter extends ListAdapter<DailyMealHistory, HistorialAdapter.HistorialViewHolder> {
+public class HistorialAdapter extends RecyclerView.Adapter<HistorialAdapter.HistorialViewHolder> {
+    private List<DailyMealHistory> historialList;
+    private final SimpleDateFormat dateFormat;
 
-    protected HistorialAdapter() {
-        super(new DiffCallback());
+    public HistorialAdapter(List<DailyMealHistory> historialList) {
+        this.historialList = historialList;
+        this.dateFormat = new SimpleDateFormat("EEEE dd/MM", Locale.getDefault());
+    }
+
+    public void submitList(List<DailyMealHistory> newList) {
+        this.historialList = newList;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -32,49 +38,44 @@ public class HistorialAdapter extends ListAdapter<DailyMealHistory, HistorialAda
 
     @Override
     public void onBindViewHolder(@NonNull HistorialViewHolder holder, int position) {
-        holder.bind(getItem(position));
+        DailyMealHistory daily = historialList.get(position);
+        holder.bind(daily);
     }
 
-    static class HistorialViewHolder extends RecyclerView.ViewHolder {
-        private final TextView tvFecha;
-        private final TextView tvCaloriasMeta;
-        private final TextView tvCaloriasConsumidas;
-        private final RecyclerView rvComidas;
+    @Override
+    public int getItemCount() {
+        return historialList.size();
+    }
 
-        public HistorialViewHolder(@NonNull View itemView) {
+    class HistorialViewHolder extends RecyclerView.ViewHolder {
+        private final TextView tvFecha;
+        private final TextView tvMeta;
+        private final TextView tvConsumido;
+        private final RecyclerView rvComidas;
+        private final ProgressBar pbCalorias;
+
+        HistorialViewHolder(@NonNull View itemView) {
             super(itemView);
             tvFecha = itemView.findViewById(R.id.tvFecha);
-            tvCaloriasMeta = itemView.findViewById(R.id.tvCaloriasMeta);
-            tvCaloriasConsumidas = itemView.findViewById(R.id.tvCaloriasConsumidas);
+            tvMeta = itemView.findViewById(R.id.tvMeta);
+            tvConsumido = itemView.findViewById(R.id.tvConsumido);
             rvComidas = itemView.findViewById(R.id.rvComidas);
-        }
+            pbCalorias = itemView.findViewById(R.id.pbCalorias);
 
-        void bind(DailyMealHistory history) {
-            tvFecha.setText(formatDate(history.getCreatedAt()));
-            tvCaloriasMeta.setText(String.format("Meta: %.0f kcal", history.getTargetCalories()));
-            tvCaloriasConsumidas.setText(String.format("Consumido: %d kcal", history.getCaloriasDiarias()));
-
-            // Configurar el RecyclerView para las comidas del día
-            List<MealRecord> mealsList = new ArrayList<>(history.getMeals().values());
-            ComidasAdapter comidasAdapter = new ComidasAdapter(mealsList);
             rvComidas.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
-            rvComidas.setAdapter(comidasAdapter);
         }
 
-        private String formatDate(Date date) {
-            return new SimpleDateFormat("EEEE dd/MM", Locale.getDefault()).format(date);
-        }
-    }
+        void bind(DailyMealHistory daily) {
+            tvFecha.setText(dateFormat.format(daily.getDate()));
+            tvMeta.setText(String.format("Meta: %.0f kcal", daily.getTargetCalories()));
+            tvConsumido.setText(String.format("Consumido: %.0f kcal", (double)daily.getCaloriasDiarias()));
 
-    static class DiffCallback extends DiffUtil.ItemCallback<DailyMealHistory> {
-        @Override
-        public boolean areItemsTheSame(@NonNull DailyMealHistory oldItem, @NonNull DailyMealHistory newItem) {
-            return oldItem.getCreatedAt().equals(newItem.getCreatedAt());
-        }
+            double progress = (daily.getCaloriasDiarias() * 100.0) / daily.getTargetCalories();
+            pbCalorias.setProgress((int)progress);
 
-        @Override
-        public boolean areContentsTheSame(@NonNull DailyMealHistory oldItem, @NonNull DailyMealHistory newItem) {
-            return oldItem.equals(newItem);
+            List<MealRecord> mealsList = new ArrayList<>(daily.getMeals().values());
+            MealRecordAdapter mealAdapter = new MealRecordAdapter(mealsList);
+            rvComidas.setAdapter(mealAdapter);
         }
     }
 }

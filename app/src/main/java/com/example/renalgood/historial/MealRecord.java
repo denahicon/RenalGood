@@ -7,6 +7,7 @@ public class MealRecord {
     private String recipeName;
     private double calories;
     private Date timestamp;
+    private NutrientInfo nutrients;
 
     public MealRecord() {}
 

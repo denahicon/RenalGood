@@ -50,7 +50,8 @@ public class HistorialActivity extends AppCompatActivity {
         rvHistorial = findViewById(R.id.rvHistorial);
         tvWeekRange = findViewById(R.id.tvWeekRange);
 
-        historialAdapter = new HistorialAdapter();
+        List<DailyMealHistory> historyList = new ArrayList<>();
+        historialAdapter = new HistorialAdapter(historyList);
         rvHistorial.setLayoutManager(new LinearLayoutManager(this));
         rvHistorial.setAdapter(historialAdapter);
 
