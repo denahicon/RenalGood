@@ -17,7 +17,6 @@ public class CitaModel {
         this.estado = estado;
     }
 
-    // Getters y setters
     public String getPacienteId() { return pacienteId; }
     public void setPacienteId(String pacienteId) { this.pacienteId = pacienteId; }
 

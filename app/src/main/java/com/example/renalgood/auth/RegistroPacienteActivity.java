@@ -15,14 +15,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.renalgood.Paciente.PacienteActivity;
 import com.example.renalgood.Paciente.PatientData;
 import com.example.renalgood.R;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,8 +31,7 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private ProgressBar progressBarLoading;
     private int currentStep = 0;
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
+    private FirebaseManager firebaseManager;
     private PatientData patientData = new PatientData();
 
     private enum FormInputType {
@@ -85,8 +80,8 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registro_paciente);
 
+        firebaseManager = FirebaseManager.getInstance();
         initializeViews();
-        initializeFirebase();
         setupListeners();
         updateUI(currentStep);
     }
@@ -101,9 +96,14 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         progressBarLoading = findViewById(R.id.progressBarLoading);
     }
 
-    private void initializeFirebase() {
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+    private void handleRegistrationError(Exception e) {
+        Log.e(TAG, "Error en el registro", e);
+        progressBarLoading.setVisibility(View.GONE);
+        btnSiguiente.setEnabled(true);
+        btnVolver.setEnabled(true);
+        DialogUtils.showErrorDialog(this,
+                "Error",
+                "Error al guardar datos: " + e.getMessage());
     }
 
     private void setupListeners() {
@@ -254,17 +254,12 @@ public class RegistroPacienteActivity extends AppCompatActivity {
     private boolean validateCurrentStep() {
         FormStep currentFormStep = formSteps[currentStep];
 
-        // Manejo específico para spinners
         if (currentFormStep.inputType == FormInputType.SPINNER) {
             int position = spDinamico.getSelectedItemPosition();
-
-            // Validación general para spinners
             if (position == 0) {
                 Toast.makeText(this, "Por favor seleccione una opción", Toast.LENGTH_SHORT).show();
                 return false;
             }
-
-            // Validación específica para el género (paso 10)
             if (currentStep == 10) {
                 String selection = spDinamico.getSelectedItem().toString();
                 if (!selection.equals("Hombre") && !selection.equals("Mujer")) {
@@ -275,26 +270,20 @@ public class RegistroPacienteActivity extends AppCompatActivity {
 
             return true;
         }
-
-        // Para campos de texto y números
         String value = etDinamico.getText().toString().trim();
         if (value.isEmpty()) {
             etDinamico.setError("Este campo es requerido");
             return false;
         }
-
-        // Validaciones específicas según el tipo
         switch (currentFormStep.inputType) {
             case TEXT_EMAIL:
-                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches()) {
-                    etDinamico.setError("Email inválido");
+                if (!ValidationUtils.validateEmail(this, etDinamico)) {
                     return false;
                 }
                 break;
 
             case TEXT_PASSWORD:
-                if (value.length() < 6) {
-                    etDinamico.setError("La contraseña debe tener al menos 6 caracteres");
+                if (!ValidationUtils.validatePassword(this, etDinamico)) {
                     return false;
                 }
                 break;
@@ -372,16 +361,7 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         progressBarLoading.setVisibility(View.VISIBLE);
         btnSiguiente.setEnabled(false);
         btnVolver.setEnabled(false);
-
-        // Verificar que tenemos todos los datos necesarios
-        if (patientData.getEmail() == null || patientData.getPassword() == null) {
-            Log.e(TAG, "registerPatient: Datos faltantes email=" + patientData.getEmail());
-            Toast.makeText(this, "Error: Faltan datos necesarios", Toast.LENGTH_LONG).show();
-            progressBarLoading.setVisibility(View.GONE);
-            return;
-        }
-
-        mAuth.createUserWithEmailAndPassword(patientData.getEmail(), patientData.getPassword())
+        firebaseManager.getAuth().createUserWithEmailAndPassword(patientData.getEmail(), patientData.getPassword())
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         String userId = task.getResult().getUser().getUid();
@@ -392,8 +372,9 @@ public class RegistroPacienteActivity extends AppCompatActivity {
                         progressBarLoading.setVisibility(View.GONE);
                         btnSiguiente.setEnabled(true);
                         btnVolver.setEnabled(true);
-                        Toast.makeText(this, "Error al registrar: " + task.getException().getMessage(),
-                                Toast.LENGTH_LONG).show();
+                        DialogUtils.showErrorDialog(this,
+                                "Error",
+                                "Error al registrar: " + task.getException().getMessage());
                     }
                 });
     }
@@ -419,22 +400,25 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         userMap.put("lastUpdate", new Timestamp(new Date()));
         userMap.put("tipo", "paciente");
 
-        db.collection("patients")
+        firebaseManager.getDb().collection("patients")
                 .document(userId)
                 .set(patientMap)
                 .addOnSuccessListener(aVoid -> {
                     // Crear documento en usuarios después de crear el paciente
-                    db.collection("usuarios")
+                    firebaseManager.getDb().collection("usuarios")
                             .document(userId)
                             .set(userMap)
                             .addOnSuccessListener(aVoid2 -> {
                                 progressBarLoading.setVisibility(View.GONE);
-                                Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show();
-
-                                Intent intent = new Intent(this, PacienteActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                                finish();
+                                DialogUtils.showSuccessDialog(this,
+                                        "Éxito",
+                                        "Registro exitoso",
+                                        (dialog, which) -> {
+                                            Intent intent = new Intent(this, PacienteActivity.class);
+                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                            startActivity(intent);
+                                            finish();
+                                        });
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Error al crear documento de usuario", e);
@@ -442,14 +426,5 @@ public class RegistroPacienteActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(this::handleRegistrationError);
-    }
-
-    private void handleRegistrationError(Exception e) {
-        Log.e(TAG, "Error en el registro", e);
-        progressBarLoading.setVisibility(View.GONE);
-        btnSiguiente.setEnabled(true);
-        btnVolver.setEnabled(true);
-        Toast.makeText(this, "Error al guardar datos: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
     }
 }

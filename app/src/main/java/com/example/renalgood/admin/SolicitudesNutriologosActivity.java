@@ -4,9 +4,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.renalgood.R;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -25,11 +24,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.example.renalgood.admin.EmailUtils;
+import com.example.renalgood.admin.ImageLoadUtils;
 
 public class SolicitudesNutriologosActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -163,157 +162,6 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
         Toast.makeText(this, "Error al cargar solicitudes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
     }
 
-    private void aprobarSolicitud(NotificacionAdmin solicitud) {
-        progressBar.setVisibility(View.VISIBLE);
-
-        // Agregar log para verificar el ID de la solicitud
-        Log.d("Aprobacion", "ID de solicitud: " + solicitud.getId());
-
-        // Primero, obtener la URL de la imagen de perfil
-        String basePath = "solicitudes/" + solicitud.getId() + "/perfil.jpg";
-        StorageReference profileRef = storage.getReference().child(basePath);
-
-        Log.d("Aprobacion", "Intentando obtener imagen desde: " + basePath);
-
-        auth.createUserWithEmailAndPassword(solicitud.getCorreo(), "temp" + System.currentTimeMillis())
-                .addOnSuccessListener(authResult -> {
-                    String uid = authResult.getUser().getUid();
-                    Log.d("Aprobacion", "Usuario creado con UID: " + uid);
-
-                    // Enviar email de restablecimiento de contraseña
-                    auth.sendPasswordResetEmail(solicitud.getCorreo());
-
-                    // Obtener URL de la imagen de perfil
-                    profileRef.getDownloadUrl()
-                            .addOnSuccessListener(uri -> {
-                                String photoUrl = uri.toString();
-                                Log.d("Aprobacion", "URL de foto obtenida: " + photoUrl);
-
-                                Map<String, Object> nutriologoData = new HashMap<>();
-                                nutriologoData.put("id", uid);
-                                nutriologoData.put("solicitudId", solicitud.getId());
-                                nutriologoData.put("nombre", solicitud.getNombre());
-                                nutriologoData.put("numeroCedula", solicitud.getNumeroCedula());
-                                nutriologoData.put("universidad", solicitud.getUniversidad());
-                                nutriologoData.put("anoGraduacion", solicitud.getAnoGraduacion());
-                                nutriologoData.put("areaEspecializacion", solicitud.getAreaEspecializacion());
-                                nutriologoData.put("anosExperiencia", solicitud.getAnosExperiencia());
-                                nutriologoData.put("direccionClinica", solicitud.getDireccionClinica());
-                                nutriologoData.put("correo", solicitud.getCorreo());
-                                nutriologoData.put("photoUrl", photoUrl);
-                                nutriologoData.put("profilePhotoPath", basePath);
-                                nutriologoData.put("estado", "aprobado");
-                                nutriologoData.put("verificado", true);
-                                nutriologoData.put("fechaVerificacion", FieldValue.serverTimestamp());
-
-                                // Guardar datos en Firestore
-                                db.collection("nutriologos")
-                                        .document(uid)
-                                        .set(nutriologoData)
-                                        .addOnSuccessListener(aVoid -> {
-                                            // Verificar que los datos se guardaron correctamente
-                                            db.collection("nutriologos")
-                                                    .document(uid)
-                                                    .get()
-                                                    .addOnSuccessListener(docSnapshot -> {
-                                                        Log.d("Aprobacion", "Datos guardados: " + docSnapshot.getData());
-                                                    });
-
-                                            // Eliminar la solicitud original
-                                            db.collection("notificaciones_admin")
-                                                    .document(solicitud.getId())
-                                                    .delete()
-                                                    .addOnSuccessListener(unused1 -> {
-                                                        progressBar.setVisibility(View.GONE);
-                                                        enviarCorreoAprobacion(solicitud.getCorreo());
-                                                        Toast.makeText(this, "Nutriólogo aprobado exitosamente",
-                                                                Toast.LENGTH_SHORT).show();
-                                                        cargarSolicitudes();
-                                                    });
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.e("Aprobacion", "Error guardando datos: " + e.getMessage());
-                                            progressBar.setVisibility(View.GONE);
-                                            Toast.makeText(this, "Error guardando datos: " + e.getMessage(),
-                                                    Toast.LENGTH_SHORT).show();
-                                        });
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e("Aprobacion", "Error obteniendo URL de imagen: " + e.getMessage());
-                                progressBar.setVisibility(View.GONE);
-                                Toast.makeText(this, "Error procesando imagen: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Aprobacion", "Error creando usuario: " + e.getMessage());
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al aprobar: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void enviarCorreoAprobacion(String correoDestinatario) {
-        String asunto = "¡Bienvenido a RenalGood - Cuenta Aprobada!";
-        String mensaje = "Tu cuenta ha sido aprobada. Recibirás un correo adicional para establecer " +
-                "tu contraseña.\n\nUna vez que hayas establecido tu contraseña, podrás iniciar " +
-                "sesión en la aplicación y comenzar a utilizar todas las funcionalidades.\n\n" +
-                "Gracias por unirte a RenalGood.";
-
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
-        intent.setData(Uri.parse("mailto:" + correoDestinatario));
-        intent.putExtra(Intent.EXTRA_SUBJECT, asunto);
-        intent.putExtra(Intent.EXTRA_TEXT, mensaje);
-
-        try {
-            startActivity(Intent.createChooser(intent, "Enviar correo de bienvenida"));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "No hay aplicaciones de correo instaladas",
-                    Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void enviarEmailRestablecimientoYGuardarDatos(String uid, NotificacionAdmin solicitud) {
-        auth.sendPasswordResetEmail(solicitud.getCorreo())
-                .addOnSuccessListener(aVoid -> guardarDatosNutriologo(uid, solicitud))
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void guardarDatosNutriologo(String uid, NotificacionAdmin solicitud) {
-        Map<String, Object> nutriologoData = solicitud.toNutriologo();
-        nutriologoData.put("id", uid);
-        nutriologoData.put("estado", "aprobado");
-        nutriologoData.put("verificado", true);
-
-        db.collection("nutriologos")
-                .document(uid)
-                .set(nutriologoData)
-                .addOnSuccessListener(aVoid -> eliminarSolicitudYNotificar(solicitud))
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al guardar datos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void eliminarSolicitudYNotificar(NotificacionAdmin solicitud) {
-        db.collection("notificaciones_admin")
-                .document(solicitud.getId())
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    progressBar.setVisibility(View.GONE);
-                    enviarCorreoRespuesta(solicitud.getCorreo(), true);
-                    Toast.makeText(this, "Solicitud aprobada correctamente", Toast.LENGTH_SHORT).show();
-                    cargarSolicitudes();
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al eliminar la solicitud", Toast.LENGTH_SHORT).show();
-                });
-    }
-
     private void mostrarDetallesSolicitud(NotificacionAdmin solicitud) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_detalles_solicitud, null);
 
@@ -347,15 +195,6 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void configurarVistaDetalles(View dialogView, NotificacionAdmin solicitud) {
-        TextView tvDetalles = dialogView.findViewById(R.id.tv_detalles);
-        ImageView ivIdentificacion = dialogView.findViewById(R.id.iv_identificacion);
-        ImageView ivSelfie = dialogView.findViewById(R.id.iv_selfie);
-
-        tvDetalles.setText(construirTextoDetalles(solicitud));
-        cargarImagenes(solicitud, ivIdentificacion, ivSelfie);
-    }
-
     private String construirTextoDetalles(NotificacionAdmin solicitud) {
         return "Nombre: " + solicitud.getNombre() + "\n" +
                 "Cédula: " + solicitud.getNumeroCedula() + "\n" +
@@ -368,27 +207,53 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
                 "Mensaje: " + solicitud.getMensaje();
     }
 
-    private void cargarImagenes(NotificacionAdmin solicitud, ImageView ivIdentificacion, ImageView ivSelfie) {
-        if (solicitud.getIdentificacionPath() != null) {
-            cargarImagen(solicitud.getIdentificacionPath(), ivIdentificacion);
+    private void rechazarSolicitudConMotivo(NotificacionAdmin solicitud, String motivo) {
+        if (solicitud == null || solicitud.getId() == null) {
+            Toast.makeText(this, "Error: Solicitud inválida", Toast.LENGTH_SHORT).show();
+            return;
         }
-        if (solicitud.getSelfiePath() != null) {
-            cargarImagen(solicitud.getSelfiePath(), ivSelfie);
-        }
-    }
 
-    private void cargarImagen(String path, ImageView imageView) {
-        storage.getReference().child(path).getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    Glide.with(this)
-                            .load(uri)
-                            .placeholder(R.drawable.ic_add_photo)
-                            .error(R.drawable.ic_add_photo)
-                            .into(imageView);
+        progressBar.setVisibility(View.VISIBLE);
+        db.collection("notificaciones_admin")
+                .document(solicitud.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    // Usar EmailUtils en lugar de enviarCorreoRechazo
+                    String asunto = "Solicitud de Registro Rechazada - RenalGood";
+                    String mensaje = "Lo sentimos, tu solicitud ha sido rechazada por el siguiente motivo:\n\n" +
+                            motivo + "\n\n" +
+                            "Puedes intentar registrarte nuevamente corrigiendo los puntos mencionados.";
+                    EmailUtils.enviarCorreo(this, solicitud.getCorreo(), asunto, mensaje);
+
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Solicitud rechazada", Toast.LENGTH_SHORT).show();
+                    cargarSolicitudes();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error al cargar imagen", Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Error al rechazar: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void cargarImagenes(NotificacionAdmin solicitud, ImageView ivIdentificacion, ImageView ivSelfie) {
+        if (solicitud.getIdentificacionPath() != null) {
+            // Usar ImageLoadUtils en lugar de cargarImagen
+            ImageLoadUtils.cargarImagenDesdeStorage(
+                    this,  // context
+                    solicitud.getIdentificacionPath(),
+                    ivIdentificacion,
+                    R.drawable.ic_add_photo  // placeholder
+            );
+        }
+        if (solicitud.getSelfiePath() != null) {
+            ImageLoadUtils.cargarImagenDesdeStorage(
+                    this,  // context
+                    solicitud.getSelfiePath(),
+                    ivSelfie,
+                    R.drawable.ic_add_photo  // placeholder
+            );
+        }
     }
 
     private void mostrarDialogoRechazo(NotificacionAdmin solicitud) {
@@ -418,72 +283,51 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void rechazarSolicitudConMotivo(NotificacionAdmin solicitud, String motivo) {
-        if (solicitud == null || solicitud.getId() == null) {
-            Toast.makeText(this, "Error: Solicitud inválida", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void aprobarSolicitud(NotificacionAdmin solicitud) {
         progressBar.setVisibility(View.VISIBLE);
-        db.collection("notificaciones_admin")
-                .document(solicitud.getId())
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    enviarCorreoRechazo(solicitud.getCorreo(), motivo);
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Solicitud rechazada", Toast.LENGTH_SHORT).show();
-                    cargarSolicitudes();
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al rechazar: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
+
+        crearUsuarioYEnviarEmail(solicitud)
+                .addOnSuccessListener(uid -> guardarDatosNutriologo(uid, solicitud))
+                .addOnFailureListener(this::manejarError);
+    }
+
+    private Task<String> crearUsuarioYEnviarEmail(NotificacionAdmin solicitud) {
+        return auth.createUserWithEmailAndPassword(solicitud.getCorreo(), "temp" + System.currentTimeMillis())
+                .continueWith(task -> {
+                    String uid = task.getResult().getUser().getUid();
+                    auth.sendPasswordResetEmail(solicitud.getCorreo());
+                    return uid;
                 });
     }
 
-    private void enviarCorreoRechazo(String correoDestinatario, String motivo) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("message/rfc822");
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{correoDestinatario});
-        intent.putExtra(Intent.EXTRA_SUBJECT, "Solicitud de Registro Rechazada - RenalGood");
-        intent.putExtra(Intent.EXTRA_TEXT,
-                "Lo sentimos, tu solicitud ha sido rechazada por el siguiente motivo:\n\n" +
-                        motivo + "\n\n" +
-                        "Puedes intentar registrarte nuevamente corrigiendo los puntos mencionados.");
+    private void guardarDatosNutriologo(String uid, NotificacionAdmin solicitud) {
+        Map<String, Object> nutriologoData = solicitud.toNutriologo();
+        nutriologoData.put("id", uid);
+        nutriologoData.put("fechaVerificacion", FieldValue.serverTimestamp());
 
-        try {
-            startActivity(Intent.createChooser(intent, "Enviar correo..."));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "No hay aplicaciones de correo instaladas",
-                    Toast.LENGTH_SHORT).show();
-        }
+        db.collection("nutriologos")
+                .document(uid)
+                .set(nutriologoData)
+                .addOnSuccessListener(unused -> eliminarSolicitudYNotificar(solicitud))
+                .addOnFailureListener(this::manejarError);
     }
 
-    private void enviarCorreoRespuesta(String correoDestinatario, boolean aprobada) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("message/rfc822");
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{correoDestinatario});
-        configurarContenidoCorreo(intent, aprobada);
-
-        try {
-            startActivity(Intent.createChooser(intent, "Enviar correo..."));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "No hay aplicaciones de correo instaladas.",
-                    Toast.LENGTH_SHORT).show();
-        }
+    private void eliminarSolicitudYNotificar(NotificacionAdmin solicitud) {
+        db.collection("notificaciones_admin")
+                .document(solicitud.getId())
+                .delete()
+                .addOnSuccessListener(unused -> {
+                    progressBar.setVisibility(View.GONE);
+                    EmailUtils.enviarCorreoSolicitud(this, solicitud.getCorreo(), true);
+                    Toast.makeText(this, "Nutriólogo aprobado exitosamente", Toast.LENGTH_SHORT).show();
+                    cargarSolicitudes();
+                })
+                .addOnFailureListener(this::manejarError);
     }
 
-    private void configurarContenidoCorreo(Intent intent, boolean aprobada) {
-        if (aprobada) {
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Solicitud Aprobada - RenalGood");
-            intent.putExtra(Intent.EXTRA_TEXT,
-                    "Tu solicitud ha sido aprobada. Recibirás un correo adicional para establecer tu contraseña. " +
-                            "Una vez que hayas establecido tu contraseña, podrás iniciar sesión en la aplicación.");
-        } else {
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Solicitud Rechazada - RenalGood");
-            intent.putExtra(Intent.EXTRA_TEXT,
-                    "Lo sentimos, tu solicitud ha sido rechazada. " +
-                            "Puedes intentar registrarte nuevamente corrigiendo la información proporcionada.");
-        }
+    private void manejarError(Exception e) {
+        progressBar.setVisibility(View.GONE);
+        Log.e("Solicitudes", "Error: " + e.getMessage());
+        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
     }
 }

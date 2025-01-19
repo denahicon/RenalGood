@@ -2,7 +2,6 @@ package com.example.renalgood.admin;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,13 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.bumptech.glide.Glide;
 import com.example.renalgood.R;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -51,56 +44,16 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         NotificacionAdmin solicitud = solicitudes.get(position);
         holder.bind(solicitud, listener);
 
-        // Cargar la imagen de identificación
         if (solicitud.getId() != null) {
-            cargarImagenIdentificacion(solicitud, holder.ivIdentificacion);
+            if (solicitud.getIdentificacionUrl() != null) {
+                ImageLoadUtils.cargarImagen(context, solicitud.getIdentificacionUrl(),
+                        holder.ivIdentificacion, R.drawable.ic_add_photo);
+            } else {
+                String basePath = "verificacion/" + solicitud.getId() + "/";
+                ImageLoadUtils.cargarImagenDesdeStorage(context, basePath + "identificacion.jpg",
+                        holder.ivIdentificacion, R.drawable.ic_add_photo);
+            }
         }
-    }
-
-    private void cargarImagenDesdeUrl(String url, ImageView imageView) {
-        if (imageView != null) {
-            Glide.with(context)
-                    .load(url)
-                    .placeholder(R.drawable.ic_add_photo)
-                    .error(R.drawable.ic_add_photo)
-                    .into(imageView);
-        }
-    }
-
-    private void cargarImagenIdentificacion(NotificacionAdmin solicitud, ImageView imageView) {
-        if (solicitud.getId() == null) return;
-
-        // Primero intenta usar la URL directa
-        if (solicitud.getIdentificacionUrl() != null &&
-                !solicitud.getIdentificacionUrl().isEmpty()) {
-            cargarImagenDesdeUrl(solicitud.getIdentificacionUrl(), imageView);
-            return;
-        }
-
-        // Si no hay URL, construye la ruta base
-        String basePath = "verificacion/" + solicitud.getId() + "/";
-        String[] posiblesRutas = {
-                basePath + "identificacion.jpg",
-                basePath + "ceb3a67b-fe68-/identificacion.jpg"
-        };
-
-        cargarImagenDesdePosiblesRutas(posiblesRutas, imageView);
-    }
-
-    private void cargarImagenDesdePosiblesRutas(String[] rutas, ImageView imageView) {
-        if (rutas.length == 0) return;
-
-        StorageReference ref = FirebaseStorage.getInstance().getReference()
-                .child(rutas[0]);
-        ref.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    cargarImagenDesdeUrl(uri.toString(), imageView);
-                })
-                .addOnFailureListener(e -> {
-                    // Si falla, intenta con la siguiente ruta
-                    String[] rutasRestantes = Arrays.copyOfRange(rutas, 1, rutas.length);
-                    cargarImagenDesdePosiblesRutas(rutasRestantes, imageView);
-                });
     }
 
     @Override

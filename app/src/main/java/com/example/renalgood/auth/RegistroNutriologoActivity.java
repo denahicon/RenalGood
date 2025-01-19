@@ -80,11 +80,10 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
     private String direccionClinica = "";
     private String correo = "";
     private FirebaseAuth auth;
-    private FirebaseFirestore db;
-    private FirebaseStorage storage;
     private NutriologoRepository nutriologoRepository;
     private ProgressBar progressBar;
     private static final int STORAGE_PERMISSION_CODE = 1001;
+    private FirebaseManager firebaseManager;
 
     private final String[] preguntas = {
             "Para comenzar, ingresa tu número de cédula profesional",
@@ -122,12 +121,13 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
             }
     );
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registro_nutriologo);
+        firebaseManager = FirebaseManager.getInstance();
         inicializarVistas();
-        inicializarFirebase();
         solicitarPermisosAlmacenamiento();
         configurarListeners();
         mostrarPregunta(currentStep);
@@ -162,19 +162,6 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
     }
 
-    private void inicializarFirebase() {
-        // Solo necesitamos Storage y Firestore para la solicitud
-        db = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-
-        // Verificar que las instancias no sean nulas
-        if (db == null || storage == null) {
-            Log.e("Firebase", "Error inicializando Firebase");
-            mostrarError("Error inicializando la aplicación");
-            finish();
-        }
-    }
-
     private void configurarListeners() {
         btnSiguiente.setOnClickListener(v -> siguientePregunta());
         btnTomarPerfil.setOnClickListener(v -> verificarPermisosCamara());
@@ -188,11 +175,9 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
 
         String solicitudId = UUID.randomUUID().toString();
         ProgressDialog progressDialog = mostrarProgressDialog("Enviando solicitud...");
-
-        // Cambiar la ruta base para usar la carpeta de solicitudes
         String baseFolder = "solicitudes/" + solicitudId + "/";
 
-        StorageReference storageRef = storage.getReference();
+        StorageReference storageRef = firebaseManager.getStorage().getReference();
         StorageReference identRef = storageRef.child(baseFolder + "identificacion.jpg");
         StorageReference selfieRef = storageRef.child(baseFolder + "selfie.jpg");
         StorageReference profileRef = storageRef.child(baseFolder + "perfil.jpg");
@@ -232,9 +217,8 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
                     if (!task.isSuccessful()) throw Objects.requireNonNull(task.getException());
                     solicitudData.put("profilePhotoPath", profileRef.getPath());
                     solicitudData.put("photoUrl", task.getResult().toString());
-
-                    // Guardar en Firestore
-                    return db.collection("notificaciones_admin")
+                    return firebaseManager.getDb()
+                            .collection("notificaciones_admin")
                             .document(solicitudId)
                             .set(solicitudData);
                 })
@@ -253,8 +237,25 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
                 });
     }
 
+    private void mostrarError(String mensaje) {
+        DialogUtils.showErrorDialog(this, "Error", mensaje);
+    }
+
+    private void mostrarDialogo(String titulo, String mensaje, boolean finalizarActividad) {
+        DialogUtils.showSuccessDialog(this, titulo, mensaje,
+                (dialog, which) -> {
+                    if (finalizarActividad) {
+                        irAMainActivity();
+                    }
+                });
+    }
+
+    private ProgressDialog mostrarProgressDialog(String mensaje) {
+        return DialogUtils.showProgressDialog(this, mensaje);
+    }
+
     private void limpiarImagenesSubidas(String solicitudId) {
-        StorageReference storageRef = storage.getReference();
+        StorageReference storageRef = firebaseManager.getStorage().getReference();
         String baseFolder = "solicitudes/" + solicitudId + "/";
         storageRef.child(baseFolder + "identificacion.jpg").delete();
         storageRef.child(baseFolder + "selfie.jpg").delete();
@@ -292,20 +293,6 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
         } catch (IOException e) {
             return Tasks.forException(e);
         }
-    }
-
-    private void mostrarDialogo(String titulo, String mensaje, boolean finalizarActividad) {
-        if (isFinishing()) return;
-        new AlertDialog.Builder(this)
-                .setTitle(titulo)
-                .setMessage(mensaje)
-                .setPositiveButton("OK", (dialog, which) -> {
-                    if (finalizarActividad) {
-                        irAMainActivity();
-                    }
-                })
-                .setCancelable(!finalizarActividad)
-                .show();
     }
 
     private void irAMainActivity() {
@@ -363,18 +350,6 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
                     "No se encontró una aplicación de correo instalada",
                     Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private ProgressDialog mostrarProgressDialog(String mensaje) {
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage(mensaje);
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        return progressDialog;
-    }
-
-    private void mostrarError(String mensaje) {
-        Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show();
     }
 
     private void verificarPermisosCamara() {
@@ -536,17 +511,9 @@ public class RegistroNutriologoActivity extends AppCompatActivity {
         }
 
         if (currentStep == 7) { // Email
-            if (!isValidEmail(respuesta)) {
-                Toast.makeText(this, "Por favor ingresa un correo válido", Toast.LENGTH_SHORT).show();
-                return false;
-            }
+            return ValidationUtils.validateEmail(this, etRespuesta);
         }
         return true;
-    }
-
-    private boolean isValidEmail(String email) {
-        return email != null && !email.isEmpty() &&
-                Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
     private void mostrarCamposAdicionales() {

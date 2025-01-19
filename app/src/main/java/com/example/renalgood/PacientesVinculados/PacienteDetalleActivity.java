@@ -1,11 +1,15 @@
 package com.example.renalgood.PacientesVinculados;
 
+import android.content.DialogInterface;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,11 +31,12 @@ import java.util.TreeMap;
 
 public class PacienteDetalleActivity extends AppCompatActivity {
     private TextView tvNombre, tvEdad, tvSituacionClinica, tvPeso, tvEstatura;
-    private RecyclerView rvHistorial; // Cambiamos el nombre para consistencia
+    private RecyclerView rvHistorial;
     private HistorialAdapter historialAdapter;
     private FirebaseFirestore db;
     private String pacienteId;
     private List<DailyMealHistory> historialList;
+    private static final String TAG = "PacienteDetalle";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +63,7 @@ public class PacienteDetalleActivity extends AppCompatActivity {
         tvSituacionClinica = findViewById(R.id.tvSituacionClinica);
         tvPeso = findViewById(R.id.tvPeso);
         tvEstatura = findViewById(R.id.tvEstatura);
-        rvHistorial = findViewById(R.id.rvHistorialAlimenticio); // Usamos el ID existente
+        rvHistorial = findViewById(R.id.rvHistorialAlimenticio);
 
         db = FirebaseFirestore.getInstance();
         historialList = new ArrayList<>();
@@ -83,17 +88,16 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Map<String, DailyMealHistory> dailyMeals = new TreeMap<>(); // Cambiado a TreeMap para ordenar por fecha
+                    Map<String, DailyMealHistory> dailyMeals = new TreeMap<>();
 
-                    // Crear entradas para todos los días de la semana
                     Calendar tempCal = Calendar.getInstance();
                     tempCal.setTime(startDate);
                     for (int i = 0; i < 7; i++) {
                         String dateKey = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(tempCal.getTime());
                         dailyMeals.put(dateKey, new DailyMealHistory(
                                 tempCal.getTime(),
-                                2000, // calorías objetivo
-                                0,    // calorías consumidas
+                                2000,
+                                0,
                                 new HashMap<>(),
                                 tempCal.getTime(),
                                 0
@@ -101,7 +105,6 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                         tempCal.add(Calendar.DAY_OF_YEAR, 1);
                     }
 
-                    // Llenar con datos reales
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         MealRecord meal = doc.toObject(MealRecord.class);
                         if (meal != null) {
@@ -110,7 +113,7 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                             DailyMealHistory daily = dailyMeals.get(dateKey);
                             if (daily != null) {
                                 daily.getMeals().put(meal.getMealType(), meal);
-                                daily.setCaloriasDiarias(daily.getCaloriasDiarias() + (int)meal.getCalories());
+                                daily.setCaloriasDiarias(daily.getCaloriasDiarias() + (int) meal.getCalories());
                             }
                         }
                     }
@@ -120,7 +123,7 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                     historialAdapter.notifyDataSetChanged();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("PacienteDetalle", "Error cargando historial: " + e.getMessage());
+                    Log.e(TAG, "Error cargando historial: " + e.getMessage());
                     Toast.makeText(this, "Error al cargar el historial", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -166,7 +169,7 @@ public class PacienteDetalleActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("PacienteDetalle", "Error al cargar datos del paciente: " + e.getMessage());
+                    Log.e(TAG, "Error al cargar datos del paciente: " + e.getMessage());
                     Toast.makeText(this, "Error al cargar la información del paciente", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -185,5 +188,56 @@ public class PacienteDetalleActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_paciente_detalle, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_desvincular) {
+            mostrarDialogoDesvincular();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void mostrarDialogoDesvincular() {
+        new AlertDialog.Builder(this)
+                .setTitle("Desvincular Paciente")
+                .setMessage("¿Estás seguro que deseas desvincular a este paciente? Esta acción no se puede deshacer.")
+                .setPositiveButton("Sí, desvincular", (dialog, which) -> desvincularPaciente())
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void desvincularPaciente() {
+        db.collection("vinculaciones")
+                .whereEqualTo("pacienteId", pacienteId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().update("estado", "inactivo");
+                    }
+
+                    db.collection("patients")
+                            .document(pacienteId)
+                            .update("nutriologoId", null)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Paciente desvinculado exitosamente", Toast.LENGTH_SHORT).show();
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error al actualizar paciente", e);
+                                Toast.makeText(this, "Error al desvincular: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error al buscar vinculación", e);
+                    Toast.makeText(this, "Error al desvincular: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }

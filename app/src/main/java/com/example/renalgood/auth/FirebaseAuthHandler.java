@@ -3,13 +3,11 @@ package com.example.renalgood.auth;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.QuerySnapshot;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,12 +15,10 @@ import java.util.Map;
 public class FirebaseAuthHandler {
     private static final String TAG = "FirebaseAuthHandler";
     private static final String CACHE_PREFIX = "user_email_";
-    private static final long CACHE_DURATION = 1000 * 60 * 30; // 30 minutos
-
+    private static final long CACHE_DURATION = 1000 * 60 * 30;
     private final SharedPreferences prefs;
     private final Context context;
-    private final FirebaseAuth auth;
-    private final FirebaseFirestore db;
+    private final FirebaseManager firebaseManager;
 
     public interface OnPasswordResetComplete {
         void onComplete(boolean success, String message);
@@ -38,11 +34,9 @@ public class FirebaseAuthHandler {
 
     public FirebaseAuthHandler(Context context) {
         this.context = context;
-        this.auth = FirebaseAuth.getInstance();
-        this.db = FirebaseFirestore.getInstance();
+        this.firebaseManager = FirebaseManager.getInstance();
         this.prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE);
 
-        // Limpiar cache antiguo al inicializar
         cleanupOldCache();
     }
 
@@ -53,7 +47,7 @@ public class FirebaseAuthHandler {
                 return;
             }
 
-            auth.sendPasswordResetEmail(email)
+            firebaseManager.getAuth().sendPasswordResetEmail(email)
                     .addOnSuccessListener(aVoid -> updatePasswordResetStatus(email, true, updateSuccess -> {
                         if (updateSuccess) {
                             callback.onComplete(true, null);
@@ -82,8 +76,8 @@ public class FirebaseAuthHandler {
         }
 
         List<Task<QuerySnapshot>> tasks = new ArrayList<>();
-        tasks.add(db.collection("patients").whereEqualTo("email", email).limit(1).get());
-        tasks.add(db.collection("doctors").whereEqualTo("email", email).limit(1).get());
+        tasks.add(firebaseManager.getDb().collection("patients").whereEqualTo("email", email).limit(1).get());
+        tasks.add(firebaseManager.getDb().collection("doctors").whereEqualTo("email", email).limit(1).get());
 
         Tasks.whenAllComplete(tasks).addOnCompleteListener(task -> {
             boolean exists = false;
@@ -106,6 +100,32 @@ public class FirebaseAuthHandler {
         });
     }
 
+    private void updatePasswordResetStatus(String email, boolean resetPending, OnStatusUpdate callback) {
+        updateCollectionResetStatus("patients", email, resetPending, success -> {
+            if (success) {
+                callback.onComplete(true);
+            } else {
+                updateCollectionResetStatus("doctors", email, resetPending, callback);
+            }
+        });
+    }
+
+    private void updateCollectionResetStatus(String collection, String email, boolean resetPending, OnStatusUpdate callback) {
+        firebaseManager.getDb().collection(collection).whereEqualTo("email", email).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        querySnapshot.getDocuments().get(0).getReference()
+                                .update("passwordResetPending", resetPending,
+                                        "lastPasswordReset", com.google.firebase.Timestamp.now())
+                                .addOnSuccessListener(aVoid -> callback.onComplete(true))
+                                .addOnFailureListener(e -> callback.onComplete(false));
+                    } else {
+                        callback.onComplete(false);
+                    }
+                })
+                .addOnFailureListener(e -> callback.onComplete(false));
+    }
+
     private void cleanupOldCache() {
         Map<String, ?> allPrefs = prefs.getAll();
         long currentTime = System.currentTimeMillis();
@@ -126,28 +146,4 @@ public class FirebaseAuthHandler {
         editor.apply();
     }
 
-    private void updatePasswordResetStatus(String email, boolean resetPending, OnStatusUpdate callback) {
-        updateCollectionResetStatus("patients", email, resetPending, success -> {
-            if (success) {
-                callback.onComplete(true);
-            } else {
-                updateCollectionResetStatus("doctors", email, resetPending, callback);
-            }
-        });
-    }
-
-    private void updateCollectionResetStatus(String collection, String email, boolean resetPending, OnStatusUpdate callback) {
-        db.collection(collection).whereEqualTo("email", email).get()
-                .addOnSuccessListener(querySnapshot -> {
-                    if (!querySnapshot.isEmpty()) {
-                        querySnapshot.getDocuments().get(0).getReference()
-                                .update("passwordResetPending", resetPending, "lastPasswordReset", com.google.firebase.Timestamp.now())
-                                .addOnSuccessListener(aVoid -> callback.onComplete(true))
-                                .addOnFailureListener(e -> callback.onComplete(false));
-                    } else {
-                        callback.onComplete(false);
-                    }
-                })
-                .addOnFailureListener(e -> callback.onComplete(false));
-    }
 }
