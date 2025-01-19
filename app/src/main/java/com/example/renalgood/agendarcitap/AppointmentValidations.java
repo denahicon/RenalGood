@@ -45,8 +45,13 @@ public class AppointmentValidations {
     }
 
     public static void cleanupExpiredAppointments(FirebaseFirestore db) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, 24); // Obtener fecha límite (24 horas desde ahora)
+        Timestamp limitTimestamp = new Timestamp(calendar.getTime());
+
         db.collection("citas")
                 .whereEqualTo("estado", "pendiente")
+                .whereLessThan("fecha", limitTimestamp)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot document : querySnapshot) {
@@ -56,8 +61,19 @@ public class AppointmentValidations {
                         if (appointmentTimestamp != null && appointmentHour != null) {
                             if (isAppointmentConfirmationExpired(appointmentTimestamp, appointmentHour)) {
                                 document.getReference().delete()
-                                        .addOnSuccessListener(aVoid ->
-                                                Log.d(TAG, "Deleted expired appointment: " + document.getId()))
+                                        .addOnSuccessListener(aVoid -> {
+                                            Log.d(TAG, "Deleted expired appointment: " + document.getId());
+                                            // Enviar notificación al paciente
+                                            String pacienteId = document.getString("pacienteId");
+                                            if (pacienteId != null) {
+                                                NotificationService.sendAppointmentExpiredNotification(
+                                                        pacienteId,
+                                                        document.getId(),
+                                                        new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(appointmentTimestamp.toDate()),
+                                                        appointmentHour
+                                                );
+                                            }
+                                        })
                                         .addOnFailureListener(e ->
                                                 Log.e(TAG, "Error deleting expired appointment", e));
                             }
@@ -96,19 +112,42 @@ public class AppointmentValidations {
     }
 
     public static boolean canCancelAppointment(Timestamp appointmentTimestamp, String appointmentHour) {
-        return isWithinTimeWindow(appointmentTimestamp, appointmentHour, 24);
+        try {
+            Calendar appointmentCal = getAppointmentCalendar(appointmentTimestamp, appointmentHour);
+            if (appointmentCal == null) return false;
+
+            // Obtener el calendario actual
+            Calendar currentCal = Calendar.getInstance();
+
+            // Calcular el límite de 24 horas antes de la cita
+            Calendar limitCal = (Calendar) appointmentCal.clone();
+            limitCal.add(Calendar.HOUR_OF_DAY, -24);
+
+            // Debug logs
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+            Log.d(TAG, "Hora actual: " + sdf.format(currentCal.getTime()));
+            Log.d(TAG, "Hora de la cita: " + sdf.format(appointmentCal.getTime()));
+            Log.d(TAG, "Límite para cancelar: " + sdf.format(limitCal.getTime()));
+            Log.d(TAG, "¿Se puede cancelar? " + currentCal.before(appointmentCal));
+
+            // La cita puede ser cancelada si la hora actual es anterior a la hora de la cita
+            return currentCal.before(appointmentCal);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking cancellation window", e);
+            return false;
+        }
     }
 
     public static boolean isAppointmentConfirmationExpired(Timestamp appointmentTimestamp, String appointmentHour) {
         return !isWithinTimeWindow(appointmentTimestamp, appointmentHour, 24);
     }
 
-
     public static void verifyAppointmentAvailability(FirebaseFirestore db,
                                                      Date fecha,
                                                      String hora,
                                                      String nutriologoId,
                                                      AppointmentCallback callback) {
+        // Primero verificar si hay citas confirmadas
         db.collection("citas")
                 .whereEqualTo("fecha", new Timestamp(fecha))
                 .whereEqualTo("hora", hora)
@@ -118,10 +157,49 @@ public class AppointmentValidations {
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
                         callback.onError("El horario seleccionado no está disponible");
-                    } else {
-                        callback.onSuccess();
+                        return;
                     }
+
+                    // Luego verificar si el paciente ya tiene una cita pendiente
+                    db.collection("citas")
+                            .whereEqualTo("pacienteId", nutriologoId)
+                            .whereEqualTo("estado", "pendiente")
+                            .get()
+                            .addOnSuccessListener(pendingSnapshot -> {
+                                if (!pendingSnapshot.isEmpty()) {
+                                    callback.onError("Ya tienes una cita pendiente. No puedes agendar múltiples citas.");
+                                    return;
+                                }
+                                callback.onSuccess();
+                            })
+                            .addOnFailureListener(e -> callback.onError("Error al verificar citas pendientes: " + e.getMessage()));
                 })
                 .addOnFailureListener(e -> callback.onError("Error al verificar disponibilidad: " + e.getMessage()));
+    }
+
+    public static boolean isValidAppointmentTime(Calendar selectedCalendar) {
+        Calendar currentCalendar = Calendar.getInstance();
+
+        // Resetear segundos y milisegundos
+        selectedCalendar.set(Calendar.SECOND, 0);
+        selectedCalendar.set(Calendar.MILLISECOND, 0);
+        currentCalendar.set(Calendar.SECOND, 0);
+        currentCalendar.set(Calendar.MILLISECOND, 0);
+
+        // Validar fecha pasada
+        if (selectedCalendar.before(currentCalendar)) {
+            return false;
+        }
+
+        // Validar horario laboral (9 AM - 6 PM)
+        int hour = selectedCalendar.get(Calendar.HOUR_OF_DAY);
+        int minute = selectedCalendar.get(Calendar.MINUTE);
+        if (hour < 9 || hour > 18 || (hour == 18 && minute > 0)) {
+            return false;
+        }
+
+        // Validar fin de semana
+        int dayOfWeek = selectedCalendar.get(Calendar.DAY_OF_WEEK);
+        return dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY;
     }
 }

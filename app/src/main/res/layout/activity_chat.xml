@@ -182,7 +182,7 @@
             android:layout_weight="1"
             android:layout_gravity="center"
             android:layout_margin="8dp"
-            android:src="@drawable/ic_email"
+            android:src="@drawable/ic_emaill"
             android:contentDescription="Notificaciones" />
 
         <ImageView

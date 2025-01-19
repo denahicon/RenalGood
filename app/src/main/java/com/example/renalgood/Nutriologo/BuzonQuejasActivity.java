@@ -67,7 +67,7 @@ public class BuzonQuejasActivity extends AppCompatActivity {
             ivCarta = findViewById(R.id.ivCarta);
 
             // Configurar el ícono de carta como seleccionado
-            ivCarta.setImageResource(R.drawable.ic_email);
+            ivCarta.setImageResource(R.drawable.ic_emaill);
             ivCarta.setColorFilter(getResources().getColor(R.color.pink_strong));
 
             Log.d(TAG, "Vistas inicializadas correctamente");

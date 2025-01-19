@@ -104,7 +104,7 @@
             android:layout_height="56dp"
             android:layout_weight="1"
             android:layout_gravity="center"
-            android:src="@drawable/ic_email"
+            android:src="@drawable/ic_emaill"
             android:contentDescription="Notificaciones"
             android:scaleType="fitCenter"
             android:padding="16dp"/>

@@ -60,4 +60,15 @@ public class NotificationService {
             Log.e(TAG, "Error enviando notificación", e);
         }
     }
+
+    public static void sendAppointmentExpiredNotification(String pacienteId, String citaId,
+                                                          String fecha, String hora) {
+        sendNotificationToUser(pacienteId, "patients",
+                "appointment_expired",
+                "Cita Expirada",
+                "Tu cita para el " + fecha + " a las " + hora +
+                        " ha sido cancelada porque no fue confirmada a tiempo",
+                citaId);
+    }
+
 }

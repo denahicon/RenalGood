@@ -85,7 +85,7 @@
             android:layout_width="0dp"
             android:layout_height="24dp"
             android:layout_weight="1"
-            android:src="@drawable/ic_email"
+            android:src="@drawable/ic_emaill"
             android:layout_gravity="center"/>
 
         <ImageView

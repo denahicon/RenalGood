@@ -70,7 +70,7 @@ public class BuzonAdminActivity extends AppCompatActivity {
             finish();
         });
 
-        ivEmail.setImageResource(R.drawable.ic_email);
+        ivEmail.setImageResource(R.drawable.ic_emaill);
         ivEmail.setColorFilter(getResources().getColor(R.color.red));
 
         ivAddRecipe.setOnClickListener(v -> {

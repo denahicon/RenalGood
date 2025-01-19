@@ -133,7 +133,7 @@
             android:layout_weight="1"
             android:contentDescription="Notificaciones"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_email"
+            android:src="@drawable/ic_emaill"
             android:tintMode="src_in"
             app:tint="@color/icon_default" />
     </LinearLayout>

@@ -23,4 +23,10 @@
     <color name="green">#4CAF50</color>
     <color name="orange">#FF9800</color>
     <color name="icon_selected">#2196F3</color>
+    <color name="accent_red">#E53935</color>
+    <color name="accent_red_light">#FF6F60</color>
+    <color name="accent_red_dark">#AB000D</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="background_light">#FAFAFA</color>
 </resources>

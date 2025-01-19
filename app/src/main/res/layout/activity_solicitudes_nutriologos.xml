@@ -92,7 +92,7 @@
             android:layout_height="24dp"
             android:layout_gravity="center"
             android:layout_weight="1"
-            android:src="@drawable/ic_email" />
+            android:src="@drawable/ic_emaill" />
 
         <ImageView
             android:id="@+id/ivAddRecipe"
