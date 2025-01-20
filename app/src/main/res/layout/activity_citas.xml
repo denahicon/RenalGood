@@ -16,7 +16,9 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@color/teal_700"
+            app:elevation="0dp">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -24,7 +26,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/white"
                 app:title=""
-                app:titleCentered="true">
+                app:layout_scrollFlags="scroll|enterAlways|snap">
 
                 <TextView
                     android:id="@+id/toolbar_title"
@@ -33,21 +35,27 @@
                     android:layout_gravity="center"
                     android:text="CITAS"
                     android:textColor="@color/black"
-                    android:textSize="20sp"
+                    android:textSize="24sp"
                     android:textStyle="bold"
-                    android:fontFamily="@font/tipo1"/>
+                    android:fontFamily="@font/tipo3"/>
 
             </androidx.appcompat.widget.Toolbar>
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:background="@color/white"
-                app:tabTextColor="@color/black"
-                app:tabSelectedTextColor="@color/purple_500"
-                app:tabIndicatorColor="@color/purple_500"
-                app:tabTextAppearance="@style/CustomTabTextAppearance"/>
+                android:paddingHorizontal="16dp"
+                app:tabTextColor="@color/gray_500"
+                app:tabSelectedTextColor="@color/pink_strong"
+                app:tabIndicatorColor="@color/pink_strong"
+                app:tabIndicatorHeight="3dp"
+                app:tabTextAppearance="@style/CustomTabTextAppearance"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
+                app:tabRippleColor="@android:color/transparent"
+                app:tabBackground="@android:color/transparent"/>
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -55,87 +63,57 @@
             android:id="@+id/viewPager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/background_light"
+            android:clipToPadding="false"
+            android:clipChildren="false"
+            android:overScrollMode="never"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <LinearLayout
         android:id="@+id/bottomNavigation"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="62dp"
-        android:background="#FFFFFF"
-        android:elevation="8dp"
+        android:background="@color/white"
+        android:elevation="16dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="4dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:paddingVertical="4dp"
+        android:paddingHorizontal="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <ImageView
             android:id="@+id/ivHome"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:contentDescription="Inicio"
-            android:scaleType="fitCenter"
+            style="@style/BottomNavigationIcon"
             android:src="@drawable/ic_home"
-            android:tintMode="src_in"
-            app:tint="@color/icon_default" />
+            android:contentDescription="Inicio"/>
 
         <ImageView
             android:id="@+id/ivMensaje"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:contentDescription="Mensajes"
-            android:scaleType="fitCenter"
+            style="@style/BottomNavigationIcon"
             android:src="@drawable/ic_message"
-            android:tintMode="src_in"
-            app:tint="@color/icon_default" />
+            android:contentDescription="Mensajes"/>
 
         <ImageView
             android:id="@+id/ivCalendario"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:contentDescription="Calendario"
-            android:scaleType="fitCenter"
+            style="@style/BottomNavigationIcon"
             android:src="@drawable/ic_calendar"
-            android:tintMode="src_in"
-            app:tint="@color/icon_default" />
+            android:contentDescription="Calendario"
+            app:tint="@color/teal_700"/>
 
         <ImageView
             android:id="@+id/group_2811039"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:contentDescription="PacientesVinculados"
-            android:scaleType="fitCenter"
+            style="@style/BottomNavigationIcon"
             android:src="@drawable/group_2811039"
-            android:tintMode="src_in"
-            app:tint="@color/icon_default" />
+            android:contentDescription="PacientesVinculados"/>
 
         <ImageView
             android:id="@+id/ivCarta"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            android:contentDescription="Notificaciones"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_emaill"
-            android:tintMode="src_in"
-            app:tint="@color/icon_default" />
+            style="@style/BottomNavigationIcon"
+            android:src="@drawable/ic_email"
+            android:contentDescription="Notificaciones"/>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

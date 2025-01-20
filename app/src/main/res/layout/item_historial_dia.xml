@@ -4,10 +4,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/white">
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/stroke_light">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,23 +16,20 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header with date and calories -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:id="@+id/tvFecha"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:fontFamily="@font/tipo2"/>
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -43,33 +41,28 @@
                     android:id="@+id/tvMeta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:fontFamily="@font/tipo2"/>
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/tvConsumido"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/progress_indicator"
-                    android:fontFamily="@font/tipo2"/>
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    android:textColor="@color/progress_indicator" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Progress bar -->
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/pbCalorias"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:trackThickness="8dp"
-            app:trackCornerRadius="4dp"
+            app:trackThickness="6dp"
+            app:trackCornerRadius="3dp"
             app:indicatorColor="@color/progress_indicator"
             app:trackColor="@color/progress_track"/>
 
-        <!-- Meals List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvComidas"
             android:layout_width="match_parent"

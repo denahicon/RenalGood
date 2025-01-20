@@ -38,4 +38,11 @@
     <color name="message_sent_background">@color/button_primary</color>
     <color name="message_received_background">#F0F0F0</color>
     <color name="gray_500">#6B7280</color>
+    <color name="gray_400">#9CA3AF</color>
+    <color name="gray_600">#4B5563</color>
+    <color name="chat_background">#F5F5F5</color>
+    <color name="pink_light">#FFE4EC</color>
+    <color name="stroke_color">#E0E0E0</color>
+    <color name="stroke_light">#E0E0E0</color>
+    <color name="ripple_color">#1F000000</color>
 </resources>
