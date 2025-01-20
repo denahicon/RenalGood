@@ -1,227 +1,222 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#d3d3d3">
+    android:background="@color/white">
 
-    <RelativeLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/button_primary"
+        android:elevation="0dp">
+
+        <TextView
+            android:id="@+id/tituloCalendario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:text="Agendar Cita"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="24sp"
+            android:fontFamily="@font/tipo3"
+            app:layout_scrollFlags="scroll|enterAlways"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNavigation"
-        android:padding="16dp">
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="80dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/mensajeNoVinculado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="No se ha vinculado con ningún nutriólogo"
-            android:textSize="18sp"
-            android:visibility="gone"
-            android:fontFamily="@font/tipo3"
-            android:textColor="#000000"
-            android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/mensajeNoVinculado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="16dp"
+                android:padding="16dp"
+                android:text="No se ha vinculado con ningún nutriólogo"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:fontFamily="@font/tipo3"
+                android:background="@drawable/mensaje_no_vinculado_background"
+                android:visibility="gone"
+                android:textSize="16sp"/>
 
-        <LinearLayout
-            android:id="@+id/calendarioLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="visible">
+            <LinearLayout
+                android:id="@+id/calendarioLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tituloCalendario"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Seleccione fecha y hora para su cita"
-                        android:fontFamily="@font/tipo3"
-                        android:textColor="#000000"
-                        android:textStyle="bold"
-                        android:textSize="18sp"
-                        android:layout_marginBottom="16dp"/>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="8dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <CalendarView
                         android:id="@+id/calendarView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"/>
+                        android:background="@color/white"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="8dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <TimePicker
                         android:id="@+id/timePicker"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:timePickerMode="spinner"/>
+                        android:timePickerMode="spinner"
+                        android:background="@color/white"/>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <Button
-                        android:id="@+id/btnAgendar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#000000"
-                        android:fontFamily="@font/tipo1"
-                        android:text="Agendar Cita"
-                        android:layout_marginTop="16dp"
-                        android:backgroundTint="@color/red"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAgendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginVertical="16dp"
+                    android:text="Agendar Cita"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/tipo1"
+                    android:backgroundTint="@color/button_primary"
+                    app:cornerRadius="28dp"/>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardEstadoCita"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:visibility="visible"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEstadoCita"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Estado de la cita"
-                        android:textAlignment="center"
-                        android:fontFamily="@font/tipo3"
-                        android:textStyle="bold"
-                        android:textSize="18sp"
-                        android:layout_marginBottom="8dp"/>
-
-                    <TextView
-                        android:id="@+id/tvFechaHoraCita"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textAlignment="center"
-                        android:fontFamily="@font/tipo3"
-                        android:textSize="16sp"
-                        android:layout_marginBottom="8dp"/>
+                    android:visibility="visible"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
 
                     <LinearLayout
-                        android:id="@+id/estadoContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:orientation="vertical"
-                        android:visibility="visible"
-                        android:padding="12dp"
-                        android:background="@drawable/estado_background">
+                        android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/tvEstadoCita"
+                            style="@style/TextAppearance.MaterialComponents.Headline6"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
+                            android:text="Estado de la cita"
+                            android:textAlignment="center"
                             android:fontFamily="@font/tipo3"
-                            android:gravity="center"
-                            android:textAlignment="center"/>
+                            android:layout_marginBottom="8dp"/>
 
+                        <TextView
+                            android:id="@+id/tvFechaHoraCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="center"
+                            android:fontFamily="@font/tipo3"
+                            android:textSize="16sp"
+                            android:layout_marginBottom="8dp"/>
+
+                        <LinearLayout
+                            android:id="@+id/estadoContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="@drawable/estado_background"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:id="@+id/tvEstadoCita"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textAlignment="center"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/tipo3"/>
+
+                        </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <Button
-                android:id="@+id/btnCancelarCita"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="CANCELAR CITA"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/tipo1"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:padding="12dp"
-                android:visibility="visible"
-                android:clickable="true"
-                android:focusable="true"
-                android:elevation="4dp"
-                android:backgroundTint="#FF0000"/>
-
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelarCita"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Cancelar Cita"
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/tipo1"
+                    android:backgroundTint="#FF0000"
+                    app:cornerRadius="28dp"/>
+            </LinearLayout>
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:cardElevation="8dp">
+
+        <LinearLayout
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@color/white"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:id="@+id/ivHome"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_home"
+                android:contentDescription="Inicio"/>
+
+            <ImageView
+                android:id="@+id/ivLupa"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_search"
+                android:contentDescription="Buscar"/>
+
+            <ImageView
+                android:id="@+id/ivChef"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="Recetas"/>
+
+            <ImageView
+                android:id="@+id/ivMensaje"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_message"
+                android:contentDescription="Mensajes"/>
+
+            <ImageView
+                android:id="@+id/ivCarta"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_email"
+                android:contentDescription="Notificaciones"/>
+
+            <ImageView
+                android:id="@+id/ivCalendario"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_calendar"
+                android:contentDescription="Calendario"/>
         </LinearLayout>
-        </ScrollView>
-    </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-<LinearLayout
-android:id="@+id/bottomNavigation"
-android:layout_width="match_parent"
-android:layout_height="56dp"
-    android:layout_alignParentBottom="true"
-android:background="#FFFFFF"
-android:elevation="8dp"
-android:orientation="horizontal"
-android:weightSum="6">
-
-<ImageView
-    android:id="@+id/ivHome"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_home"
-    android:contentDescription="Inicio" />
-
-<ImageView
-    android:id="@+id/ivLupa"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_search"
-    android:contentDescription="Buscar" />
-
-<ImageView
-    android:id="@+id/ivChef"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_menu"
-    android:contentDescription="Recetas" />
-
-<ImageView
-    android:id="@+id/ivMensaje"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_message"
-    android:contentDescription="Mensajes" />
-
-<ImageView
-    android:id="@+id/ivCarta"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_emaill"
-    android:contentDescription="Notificaciones" />
-
-<ImageView
-    android:id="@+id/ivCalendario"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:layout_gravity="center"
-    android:layout_margin="8dp"
-    android:src="@drawable/ic_calendar"
-    android:contentDescription="Calendario" />
-</LinearLayout>
-
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -11,8 +11,8 @@ public class NotificationService {
     private static final String TAG = "NotificationService";
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    private static void sendNotificationToUser(String userId, String userCollection,
-                                               String type, String title, String message, String citaId) {
+    public static void sendNotificationToUser(String userId, String userCollection,
+                                              String type, String title, String message, String citaId) {
         Log.d(TAG, "Enviando notificación tipo " + type + " a usuario: " + userId);
 
         db.collection(userCollection)
@@ -69,6 +69,19 @@ public class NotificationService {
                 "Tu cita para el " + fecha + " a las " + hora +
                         " ha sido cancelada porque no fue confirmada a tiempo",
                 citaId);
+    }
+
+    public static void sendAppointmentCancellation(String pacienteId, String citaId,
+                                                   String fecha, String hora) {
+        sendNotificationToUser(
+                pacienteId,
+                "patients",
+                "appointment_cancellation",
+                "Cita Cancelada",
+                "Tu cita para el " + fecha + " a las " + hora +
+                        " ha sido cancelada por tu nutriólogo",
+                citaId
+        );
     }
 
 }

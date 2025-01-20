@@ -8,6 +8,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
+import com.example.renalgood.agendarcitap.AppointmentValidations;
+import com.google.firebase.Timestamp;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +24,9 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
     public interface CitaClickListener {
         void onAceptarClick(CitaModel cita);
         void onRechazarClick(CitaModel cita);
+        void onCancelarClick(CitaModel cita); // Nuevo método
     }
+
 
     public CitasAdapter(CitaClickListener listener) {
         this.citasList = new ArrayList<>();
@@ -59,6 +64,7 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
         private final TextView tvHoraCita;
         private final Button btnAceptar;
         private final Button btnRechazar;
+        private final Button btnCancelar; // Nuevo botón
 
         CitaViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -67,20 +73,31 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
             tvHoraCita = itemView.findViewById(R.id.tvHoraCita);
             btnAceptar = itemView.findViewById(R.id.btnAceptar);
             btnRechazar = itemView.findViewById(R.id.btnRechazar);
+            btnCancelar = itemView.findViewById(R.id.btnCancelar);
         }
 
         void bind(final CitaModel cita) {
             tvNombrePaciente.setText(String.format("Paciente: %s", cita.getPacienteNombre()));
-
-            if (cita.getFecha() != null) {
-                tvFechaCita.setText(String.format("Fecha: %s", dateFormat.format(cita.getFecha())));
-            } else {
-                tvFechaCita.setText("Fecha: No disponible");
-            }
-
+            tvFechaCita.setText(String.format("Fecha: %s", dateFormat.format(cita.getFecha())));
             tvHoraCita.setText(String.format("Hora: %s", cita.getHora()));
 
-            // Solo mostrar botones si la cita está pendiente
+            // Verificar si la cita puede ser cancelada
+            boolean puedeSerCancelada = false;
+            if (cita.getFecha() != null) {
+                Timestamp citaTimestamp = new Timestamp(cita.getFecha());
+                puedeSerCancelada = AppointmentValidations.canCancelAppointment(citaTimestamp, cita.getHora());
+            }
+
+            if ("confirmada".equals(cita.getEstado()) && puedeSerCancelada) {
+                btnCancelar.setVisibility(View.VISIBLE);
+                btnCancelar.setOnClickListener(v -> {
+                    if (listener != null) listener.onCancelarClick(cita);
+                });
+            } else {
+                btnCancelar.setVisibility(View.GONE);
+            }
+
+            // Solo mostrar botones de aceptar/rechazar si la cita está pendiente
             if ("pendiente".equals(cita.getEstado())) {
                 btnAceptar.setVisibility(View.VISIBLE);
                 btnRechazar.setVisibility(View.VISIBLE);
@@ -88,7 +105,6 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
                 btnAceptar.setOnClickListener(v -> {
                     if (listener != null) listener.onAceptarClick(cita);
                 });
-
                 btnRechazar.setOnClickListener(v -> {
                     if (listener != null) listener.onRechazarClick(cita);
                 });

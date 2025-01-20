@@ -46,15 +46,34 @@ public class CalendarioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_calendario);
 
         initializeFirebase();
+
+        if (db != null) {
+            AppointmentCleanupService.cleanupPastAppointments(db);
+        } else {
+            Log.e(TAG, "Error: Firebase no inicializado correctamente");
+        }
+
         initializeViews();
         setupInitialState();
         setupListeners();
     }
 
     private void initializeFirebase() {
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
-        userId = mAuth.getCurrentUser().getUid();
+        try {
+            db = FirebaseFirestore.getInstance();
+            mAuth = FirebaseAuth.getInstance();
+            if (mAuth.getCurrentUser() != null) {
+                userId = mAuth.getCurrentUser().getUid();
+            } else {
+                Log.e(TAG, "Error: Usuario no autenticado");
+                finish();
+                return;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error inicializando Firebase", e);
+            Toast.makeText(this, "Error al inicializar la aplicación", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     private void initializeViews() {
@@ -95,12 +114,90 @@ public class CalendarioActivity extends AppCompatActivity {
         setupNavigationListeners();
         verificarVinculacionNutriologo();
         verificarCitasPendientes();
-
         calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, month, dayOfMonth);
-            selectedDate = calendar.getTime();
+            if (AppointmentValidations.isValidAppointmentTime(calendar)) {
+                selectedDate = calendar.getTime();
+            } else {
+                selectedDate = null;
+                Toast.makeText(this, "Por favor seleccione una fecha válida dentro del horario de atención",
+                        Toast.LENGTH_SHORT).show();
+            }
         });
+    }
+
+    private void verificarDisponibilidadYAgendar(Date fechaSeleccionada, String horaSeleccionada) {
+        if (userId == null || nutriologoId == null) {
+            Toast.makeText(this, "Error: Información de usuario no disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (fechaSeleccionada == null) {
+            Toast.makeText(this, "Por favor seleccione una fecha", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Calendar appointmentCalendar = Calendar.getInstance();
+        appointmentCalendar.setTime(fechaSeleccionada);
+        String[] horaParts = horaSeleccionada.split(":");
+        appointmentCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(horaParts[0]));
+        appointmentCalendar.set(Calendar.MINUTE, Integer.parseInt(horaParts[1]));
+
+        if (!AppointmentValidations.isValidAppointmentTime(appointmentCalendar)) {
+            Toast.makeText(this, "El horario seleccionado no es válido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AppointmentValidations.verifyAppointmentAvailability(
+                db,
+                fechaSeleccionada,
+                horaSeleccionada,
+                nutriologoId,
+                userId, // Agregamos el userId como nuevo parámetro
+                new AppointmentCallback() {
+                    @Override
+                    public void onSuccess() {
+                        runOnUiThread(() -> mostrarDialogoConfirmacion(fechaSeleccionada, horaSeleccionada));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        runOnUiThread(() -> Toast.makeText(CalendarioActivity.this, message, Toast.LENGTH_SHORT).show());
+                    }
+                });
+    }
+
+    private boolean validarHorarioSeleccionado(Calendar calendar) {
+        // Validar hora dentro del rango permitido (9 AM - 6 PM)
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        if (hour < 9 || hour > 18 || (hour == 18 && minute > 0)) {
+            Toast.makeText(this, "El horario de atención es de 9:00 AM a 6:00 PM",
+                    Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // Validar que no sea fin de semana
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+            Toast.makeText(this, "No se pueden agendar citas en fin de semana",
+                    Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void mostrarDialogoConfirmacion(Date fechaSeleccionada, String horaSeleccionada) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String fechaStr = dateFormat.format(fechaSeleccionada);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Confirmar Cita")
+                .setMessage("¿Deseas agendar una cita para el día " + fechaStr + " a las " + horaSeleccionada + "?")
+                .setPositiveButton("Confirmar", (dialog, which) -> crearCita(fechaSeleccionada, horaSeleccionada))
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     private void setupListeners() {
@@ -201,22 +298,6 @@ public class CalendarioActivity extends AppCompatActivity {
 
     private void habilitarControlesParaNuevaCita() {
         actualizarEstadoControles(true, "Agendar Nueva Cita");
-    }
-
-    private void verificarDisponibilidadYAgendar(Date fechaSeleccionada, String horaSeleccionada) {
-        AppointmentValidations.verifyAppointmentAvailability(
-                db, fechaSeleccionada, horaSeleccionada, nutriologoId,
-                new AppointmentValidations.AppointmentCallback() {
-                    @Override
-                    public void onSuccess() {
-                        mostrarDialogoConfirmacion(fechaSeleccionada, horaSeleccionada);
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        Toast.makeText(CalendarioActivity.this, message, Toast.LENGTH_SHORT).show();
-                    }
-                });
     }
 
     private void crearCita(Date fechaSeleccionada, String horaSeleccionada) {
@@ -457,30 +538,57 @@ public class CalendarioActivity extends AppCompatActivity {
     }
 
     private void verificarCitasPendientes() {
+        Calendar currentTime = Calendar.getInstance();
+
         db.collection("citas")
                 .whereEqualTo("pacienteId", userId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    boolean hasCita = false;
+                    boolean hasFutureCita = false;
+
                     for (DocumentSnapshot doc : querySnapshot) {
+                        Timestamp citaTimestamp = doc.getTimestamp("fecha");
+                        String hora = doc.getString("hora");
                         String estado = doc.getString("estado");
-                        if (estado != null) {
-                            switch (estado) {
-                                case "pendiente":
-                                case "confirmada":
-                                    hasCita = true;
-                                    mostrarEstadoCita(doc);
-                                    deshabilitarControles();
-                                    break;
-                                case "rechazada":
-                                    // Si la cita fue rechazada, permitir agendar una nueva
-                                    habilitarControlesParaNuevaCita();
-                                    mostrarEstadoCita(doc);
-                                    break;
+
+                        if (citaTimestamp != null && hora != null && estado != null) {
+                            Calendar citaCalendar = Calendar.getInstance();
+                            citaCalendar.setTime(citaTimestamp.toDate());
+
+                            // Establecer la hora de la cita
+                            try {
+                                String[] horaParts = hora.split(":");
+                                citaCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(horaParts[0]));
+                                citaCalendar.set(Calendar.MINUTE, Integer.parseInt(horaParts[1]));
+
+                                // Si la cita ya pasó, eliminarla
+                                if (citaCalendar.before(currentTime)) {
+                                    eliminarCitaPasada(doc.getId());
+                                    continue;
+                                }
+
+                                // Solo procesar citas futuras
+                                if (citaCalendar.after(currentTime)) {
+                                    switch (estado) {
+                                        case "pendiente":
+                                        case "confirmada":
+                                            hasFutureCita = true;
+                                            mostrarEstadoCita(doc);
+                                            deshabilitarControles();
+                                            break;
+                                        case "rechazada":
+                                            habilitarControlesParaNuevaCita();
+                                            mostrarEstadoCita(doc);
+                                            break;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing hora: " + hora, e);
                             }
                         }
                     }
-                    if (!hasCita) {
+
+                    if (!hasFutureCita) {
                         habilitarControles();
                         cardEstadoCita.setVisibility(View.GONE);
                     }
@@ -488,21 +596,15 @@ public class CalendarioActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e(TAG, "Error verificando citas pendientes", e));
     }
 
-    private void mostrarDialogoConfirmacion(Date fechaSeleccionada, String horaSeleccionada) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Confirmar Cita");
-
-        String fechaStr = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                .format(fechaSeleccionada);
-
-        builder.setMessage("¿Deseas agendar una cita para el día " + fechaStr +
-                " a las " + horaSeleccionada + "?");
-
-        builder.setPositiveButton("Confirmar", (dialog, which) ->
-                crearCita(fechaSeleccionada, horaSeleccionada));
-
-        builder.setNegativeButton("Cancelar", null);
-        builder.show();
+    private void eliminarCitaPasada(String citaId) {
+        db.collection("citas")
+                .document(citaId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Cita pasada eliminada exitosamente: " + citaId);
+                    // No es necesario mostrar un Toast ya que es una limpieza automática
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error al eliminar cita pasada", e));
     }
 
     private void mostrarCalendario() {
@@ -523,20 +625,5 @@ public class CalendarioActivity extends AppCompatActivity {
         if (calendarioLayout != null) {
             calendarioLayout.setVisibility(View.GONE);
         }
-    }
-
-    private void eliminarCitaExpirada(String citaId) {
-        db.collection("citas")
-                .document(citaId)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    cardEstadoCita.setVisibility(View.GONE);
-                    deshabilitarControles();
-                    Toast.makeText(this,
-                            "La cita ha expirado. Puedes agendar una nueva.",
-                            Toast.LENGTH_LONG).show();
-                })
-                .addOnFailureListener(e ->
-                        Log.e(TAG, "Error al eliminar cita expirada", e));
     }
 }

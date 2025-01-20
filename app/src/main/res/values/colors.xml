@@ -37,4 +37,5 @@
     <color name="background_light">#F5F5F5</color>
     <color name="message_sent_background">@color/button_primary</color>
     <color name="message_received_background">#F0F0F0</color>
+    <color name="gray_500">#6B7280</color>
 </resources>

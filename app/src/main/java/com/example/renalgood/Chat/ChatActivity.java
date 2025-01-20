@@ -198,14 +198,13 @@ public class ChatActivity extends AppCompatActivity {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_nutriologo_profile);
 
-        // Configurar el diálogo para que ocupe el ancho completo
         Window window = dialog.getWindow();
         if (window != null) {
             window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.WRAP_CONTENT);
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
-        CircleImageView profileImage = dialog.findViewById(R.id.profileImageDialog);
+        CircleImageView profileImage = dialog.findViewById(R.id.ivNutriologoFoto);
         TextView tvNombre = dialog.findViewById(R.id.tvNombreNutriologo);
         TextView tvArea = dialog.findViewById(R.id.tvAreaEspecializacion);
         TextView tvExperiencia = dialog.findViewById(R.id.tvAnosExperiencia);
