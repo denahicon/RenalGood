@@ -28,5 +28,13 @@
     <color name="accent_red_dark">#AB000D</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#757575</color>
-    <color name="background_light">#FAFAFA</color>
+    <color name="text_primary">#212121</color>
+    <color name="accent_light">#FFB74D</color>
+    <color name="chip_background">#F5F5F5</color>
+    <color name="progress_track">#E0E0E0</color>
+    <color name="progress_indicator">#FF9800</color>
+    <color name="button_primary">#FF5722</color>
+    <color name="background_light">#F5F5F5</color>
+    <color name="message_sent_background">@color/button_primary</color>
+    <color name="message_received_background">#F0F0F0</color>
 </resources>

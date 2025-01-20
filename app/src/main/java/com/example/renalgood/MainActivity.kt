@@ -2,15 +2,11 @@ package com.example.renalgood
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.method.PasswordTransformationMethod
 import android.util.Log
-import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
-import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.renalgood.Nutriologo.NutriologoActivity
@@ -22,6 +18,7 @@ import com.example.renalgood.auth.RegistroPacienteActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.AutoCompleteTextView
 
 private const val TAG = "MainActivity"
 
@@ -30,12 +27,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editTextPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var buttonRecuperar: Button
-    private lateinit var spinnerRegistro: Spinner
+    private lateinit var spinnerRegistro: AutoCompleteTextView
     private lateinit var buttonAdmin: Button
     private lateinit var mAuth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private lateinit var eyeIcon: ImageView
-    private var isPasswordVisible = false
     private val userCache = mutableMapOf<String, Pair<String, Long>>()
     private val CACHE_DURATION = 5 * 60 * 1000
 
@@ -64,41 +59,27 @@ class MainActivity : AppCompatActivity() {
         editTextPassword = findViewById(R.id.contrasena)
         buttonLogin = findViewById(R.id.iniciar)
         buttonRecuperar = findViewById(R.id.recuperar_contrasena)
-        spinnerRegistro = findViewById(R.id.registro_spinner)
+        spinnerRegistro = findViewById(R.id.registro_spinner)  // Este ID debe coincidir con el AutoCompleteTextView
         buttonAdmin = findViewById(R.id.btnAdminLogin)
-        eyeIcon = findViewById(R.id.ojo_contrasena)
-        eyeIcon.setOnClickListener { togglePasswordVisibility() }
-        eyeIcon = findViewById(R.id.ojo_contrasena)
     }
 
     private fun setupSpinner() {
-        ArrayAdapter.createFromResource(
+        val adapter = ArrayAdapter.createFromResource(
             this,
             R.array.tipo_usuario,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerRegistro.adapter = adapter
-        }
+            android.R.layout.simple_dropdown_item_1line
+        )
+        spinnerRegistro.setAdapter(adapter)
 
-        spinnerRegistro.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parentView: AdapterView<*>,
-                selectedItemView: View?,
-                position: Int,
-                id: Long
-            ) {
-                if (position > 0) { // Ignorar la primera opción "Registrarse como"
-                    val tipoUsuario = parentView.getItemAtPosition(position).toString()
-                    when (tipoUsuario) {
-                        "Nutriologo" -> irANutriologoRegistro()
-                        "Paciente" -> irAPacienteRegistro()
-                    }
-                    spinnerRegistro.setSelection(0) // Resetear el spinner
+        spinnerRegistro.onItemClickListener = AdapterView.OnItemClickListener { parent, _, position, _ ->
+            if (position > 0) {
+                val tipoUsuario = parent.getItemAtPosition(position).toString()
+                when (tipoUsuario) {
+                    "Nutriologo" -> irANutriologoRegistro()
+                    "Paciente" -> irAPacienteRegistro()
                 }
+                spinnerRegistro.setText("", false)  // Resetear el spinner
             }
-
-            override fun onNothingSelected(parentView: AdapterView<*>?) {}
         }
     }
 
@@ -346,29 +327,5 @@ class MainActivity : AppCompatActivity() {
 
     private fun irARecuperarContrasena() {
         startActivity(Intent(this, RecuperarContrasenaActivity::class.java))
-    }
-
-    private fun togglePasswordVisibility() {
-        isPasswordVisible = !isPasswordVisible
-
-        if (isPasswordVisible) {
-            editTextPassword.transformationMethod = null
-            eyeIcon.setImageResource(R.drawable.ic_eye_open)
-        } else {
-            editTextPassword.transformationMethod = PasswordTransformationMethod.getInstance()
-            eyeIcon.setImageResource(R.drawable.ic_eye_closed)
-        }
-        editTextPassword.setSelection(editTextPassword.text.length)
-    }
-
-    private fun validateFields(): Boolean {
-        val password = editTextPassword.text.toString().trim()
-
-        if (password.isEmpty()) {
-            editTextPassword.error = "Por favor ingrese su contraseña"
-            return false
-        }
-
-        return true
     }
 }

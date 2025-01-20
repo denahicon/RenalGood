@@ -4,21 +4,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <com.google.android.material.imageview.ShapeableImageView
+        <!-- Imagen de la receta -->
+        <ImageView
             android:id="@+id/ivReceta"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.App.TopRounded"/>
+            android:scaleType="centerCrop"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -31,37 +31,32 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
-                android:textColor="@color/black"
+                android:textColor="@color/text_primary"
                 android:textStyle="bold"
-                android:maxLines="2"
-                android:ellipsize="end"/>
+                android:fontFamily="@font/tipo2"/>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginTop="8dp">
-
-                <CheckBox
-                    android:id="@+id/checkBoxReceta"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"/>
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_calorias"
-                    android:layout_gravity="center_vertical"
-                    app:tint="@color/colorAccent"/>
 
                 <TextView
                     android:id="@+id/tvCalorias"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
+                    android:drawableStart="@drawable/ic_calorias"
+                    android:drawablePadding="4dp"
                     android:textSize="14sp"
-                    android:textColor="@color/colorAccent"/>
+                    android:textColor="@color/text_secondary"
+                    android:fontFamily="@font/tipo2"/>
+
+                <CheckBox
+                    android:id="@+id/checkBoxReceta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    app:buttonTint="@color/progress_indicator"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

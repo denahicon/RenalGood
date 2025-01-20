@@ -1,141 +1,169 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="@color/background_light">
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp">
+        android:background="@android:color/transparent"
+        android:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:navigationIcon="@drawable/ic_back">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detalle del Alimento"
+                android:textSize="20sp"
+                android:fontFamily="@font/tipo1"
+                android:textColor="@color/text_primary"
+                android:layout_gravity="center"/>
+
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="16dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/nombreAlimentoTextView"
+            <!-- Tarjeta Principal -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
 
-            <ImageView
-                android:id="@+id/imagenAlimentoImageView"
-                android:layout_width="200dp"
-                android:layout_height="150dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="24dp"
-                android:background="#DDDDDD"
-                android:scaleType="centerCrop"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Información Nutricional"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:layout_marginBottom="16dp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- Calorías -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:background="#F8F8F8"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="0dp"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Imagen y Nombre -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Calorías:"/>
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:id="@+id/imagenAlimentoImageView"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:src="@drawable/placeholder_fruta"
+                            android:scaleType="centerCrop"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginStart="16dp">
+
+                            <TextView
+                                android:id="@+id/nombreAlimentoTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="24sp"
+                                android:textColor="@color/text_primary"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/tipo3"/>
+
+                            <TextView
+                                android:id="@+id/cantidadTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/text_secondary"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="@font/tipo3"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Barra de Calorías -->
                     <TextView
                         android:id="@+id/caloriasTextView"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-
-                <!-- Proteínas -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Proteínas:"/>
-                    <TextView
-                        android:id="@+id/proteinasTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/progress_indicator"
+                        android:fontFamily="@font/tipo3"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="16dp"/>
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <!-- Carbohidratos -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:background="#F8F8F8"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Carbohidratos:"/>
-                    <TextView
-                        android:id="@+id/carbohidratosTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-
-                <!-- Grasas -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Grasas:"/>
-                    <TextView
-                        android:id="@+id/grasasTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
+            <!-- Tarjeta de Nutrientes -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:background="#F8F8F8"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Cantidad sugerida:"/>
-                    <TextView
-                        android:id="@+id/cantidadTextView"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:text="Información Nutricional"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="@font/tipo7"
+                        android:layout_marginBottom="16dp"/>
+
+                    <LinearLayout style="@style/NutrientRow">
+                        <TextView
+                            style="@style/NutrientLabel"
+                            android:text="Proteínas"/>
+                        <TextView
+                            android:id="@+id/proteinasTextView"
+                            style="@style/NutrientValue"/>
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/NutrientRow">
+                        <TextView
+                            style="@style/NutrientLabel"
+                            android:text="Carbohidratos"/>
+                        <TextView
+                            android:id="@+id/carbohidratosTextView"
+                            style="@style/NutrientValue"/>
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/NutrientRow">
+                        <TextView
+                            style="@style/NutrientLabel"
+                            android:text="Grasas"/>
+                        <TextView
+                            android:id="@+id/grasasTextView"
+                            style="@style/NutrientValue"/>
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
-</ScrollView>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

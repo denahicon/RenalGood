@@ -1,205 +1,262 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#d3d3d3"
-    android:padding="16dp"
-    android:gravity="center_horizontal">
+    android:background="@drawable/login_gradient_background">
 
-    <TextView
-        android:id="@+id/tv_titulo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Registro Nutriólogo"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:fontFamily="@font/tipo3"
-        android:textColor="#000000"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="24dp"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
-
-    <!-- Contenedor para las fotos -->
-    <LinearLayout
-        android:id="@+id/photos_container"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <!-- Foto de perfil -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginBottom="16dp">
+            android:padding="24dp"
+            android:gravity="center_horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Foto de Perfil"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/profile_image"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:src="@drawable/default_profile"
-                app:civ_border_width="2dp"
-                app:civ_border_color="#FF000000"/>
-
-            <Button
-                android:id="@+id/btn_tomar_perfil"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tomar foto de perfil"
-                android:fontFamily="@font/tipo3"
-                android:backgroundTint="@color/red"
-                android:textColor="#000000"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
-
-        <!-- Contenedor para identificación y selfie -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
-            <!-- Identificación -->
+            <!-- Header Section -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Identificación"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="24dp">
 
                 <ImageView
-                    android:id="@+id/ivIdentificacion"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_add_photo"/>
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@drawable/logo1"
+                    android:layout_marginBottom="16dp"/>
 
-                <Button
-                    android:id="@+id/btnTomarIdentificacion"
+                <TextView
+                    android:id="@+id/tv_titulo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tomar foto"
-                    android:fontFamily="@font/tipo3"
-                    android:backgroundTint="@color/red"
-                    android:textColor="#000000"
-                    android:layout_marginTop="8dp"/>
+                    android:text="Registro Nutriólogo"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/tipo5"
+                    android:textColor="@color/primary_text"/>
             </LinearLayout>
 
-            <!-- Selfie -->
-            <LinearLayout
-                android:layout_width="0dp"
+            <!-- Loading Progress -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+            <!-- Photos Container -->
+            <LinearLayout
+                android:id="@+id/photos_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
+                android:visibility="gone">
+
+                <!-- Profile Photo Section -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Foto de Perfil"
+                            android:textStyle="bold"
+                            android:textColor="@color/primary_text"
+                            android:layout_marginBottom="8dp"/>
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/profile_image"
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:src="@drawable/default_profile"
+                            app:civ_border_width="2dp"
+                            app:civ_border_color="@color/accent_red"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_tomar_perfil"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tomar foto de perfil"
+                            app:cornerRadius="20dp"
+                            android:layout_marginTop="8dp"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ID and Selfie Container -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:baselineAligned="false">
+
+                        <!-- ID Section -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Identificación"
+                                android:textStyle="bold"
+                                android:textColor="@color/primary_text"
+                                android:layout_marginBottom="8dp"/>
+
+                            <ImageView
+                                android:id="@+id/ivIdentificacion"
+                                android:layout_width="140dp"
+                                android:layout_height="140dp"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_add_photo"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnTomarIdentificacion"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tomar foto"
+                                app:cornerRadius="20dp"
+                                android:layout_marginTop="8dp"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                        </LinearLayout>
+
+                        <!-- Selfie Section -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Selfie"
+                                android:textStyle="bold"
+                                android:textColor="@color/primary_text"
+                                android:layout_marginBottom="8dp"/>
+
+                            <ImageView
+                                android:id="@+id/ivSelfie"
+                                android:layout_width="140dp"
+                                android:layout_height="140dp"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_add_photo"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnTomarSelfie"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tomar selfie"
+                                app:cornerRadius="20dp"
+                                android:layout_marginTop="8dp"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Form Container -->
+            <LinearLayout
+                android:id="@+id/form_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
 
                 <TextView
+                    android:id="@+id/tv_pregunta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Selfie"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                    android:textSize="16sp"
+                    android:textColor="@color/primary_text"
+                    android:layout_marginBottom="16dp"/>
 
-                <ImageView
-                    android:id="@+id/ivSelfie"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_add_photo"/>
-
-                <Button
-                    android:id="@+id/btnTomarSelfie"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tomar selfie"
-                    android:fontFamily="@font/tipo3"
-                    android:backgroundTint="@color/red"
-                    android:textColor="#000000"
-                    android:layout_marginTop="8dp"/>
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_respuesta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
+
+            <!-- Additional Message -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_mensaje"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Mensaje adicional (opcional)"
+                    android:inputType="textMultiLine"
+                    android:maxLines="3"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Action Buttons -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_siguiente"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:text="Siguiente"
+                android:textSize="16sp"
+                app:cornerRadius="28dp"
+                android:paddingHorizontal="48dp"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/accent_red"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_enviar_solicitud"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Enviar Solicitud"
+                android:textSize="16sp"
+                app:cornerRadius="28dp"
+                android:visibility="gone"
+                android:backgroundTint="@color/accent_red"/>
+
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
-    <!-- Contenedor del formulario -->
-    <LinearLayout
-        android:id="@+id/form_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginHorizontal="24dp"
-        android:gravity="center">
-
-        <TextView
-            android:id="@+id/tv_pregunta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:gravity="center"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/et_respuesta"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:background="@android:drawable/edit_text"
-            android:gravity="center"
-            android:textAlignment="center"/>
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btn_siguiente"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Siguiente"
-        android:fontFamily="@font/tipo3"
-        android:backgroundTint="@color/red"
-        android:textColor="#000000"
-        android:layout_marginTop="32dp"
-        android:paddingHorizontal="48dp"/>
-
-    <EditText
-        android:id="@+id/et_mensaje"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Mensaje adicional (opcional)"
-        android:inputType="textMultiLine"
-        android:maxLines="3"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/btn_enviar_solicitud"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Enviar Solicitud"
-        android:visibility="gone" />
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

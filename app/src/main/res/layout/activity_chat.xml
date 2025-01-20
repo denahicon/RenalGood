@@ -1,58 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#d3d3d3">
+    android:background="@color/background_light">
 
-    <LinearLayout
-        android:id="@+id/chatHeader"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:background="@color/white"
-        android:elevation="4dp"
-        android:padding="8dp"
-        android:clickable="true"
-        android:focusable="true">
+        android:elevation="4dp">
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/profileImage"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/default_profile" />
-
-        <LinearLayout
-            android:layout_width="0dp"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/chatHeader"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:orientation="vertical">
+            app:cardElevation="0dp"
+            app:cardCornerRadius="0dp">
 
-            <TextView
-                android:id="@+id/nutriologoName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-        </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnUnlink"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_unlink"
-            app:tint="@color/red" />
-    </LinearLayout>
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/default_profile"
+                    app:civ_border_width="2dp"
+                    app:civ_border_color="@color/accent_light"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/nutriologoName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/tipo2"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nutriólogo"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/tipo2"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUnlink"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:icon="@drawable/ic_unlink"
+                    app:iconTint="@color/text_secondary"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="24dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/navigationBar"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <FrameLayout
             android:id="@+id/noVinculacionContainer"
@@ -64,136 +94,155 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/ic_no_chat"
+                    android:alpha="0.6"
+                    android:layout_marginBottom="24dp"/>
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="280dp"
                     android:layout_height="wrap_content"
                     android:text="No te has vinculado con ningún nutriólogo"
                     android:textAlignment="center"
-                    android:textColor="#000000"
-                    android:fontFamily="@font/tipo3" />
+                    android:textSize="18sp"
+                    android:textColor="@color/text_primary"
+                    android:fontFamily="@font/tipo2"/>
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnVincular"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/red"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="24dp"
                     android:text="Vincular Nutriólogo"
-                    android:textColor="#000000"
-                    android:fontFamily="@font/tipo3" />
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/tipo2"
+                    app:cornerRadius="28dp"
+                    android:paddingHorizontal="32dp"
+                    android:backgroundTint="@color/button_primary"/>
             </LinearLayout>
         </FrameLayout>
 
-        <LinearLayout
+        <!-- Chat Container -->
+        <RelativeLayout
             android:id="@+id/chatContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
             android:visibility="visible">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerChat"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:layout_above="@id/messageInputContainer"
                 android:clipToPadding="false"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:scrollbars="vertical" />
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"/>
 
-            <LinearLayout
+            <!-- Message Input Container -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/messageInputContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp">
+                android:layout_alignParentBottom="true"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp">
 
-                <EditText
-                    android:id="@+id/editMessage"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Escribe un mensaje..." />
+                    android:orientation="horizontal"
+                    android:padding="8dp">
 
-                <ImageButton
-                    android:id="@+id/btnSend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_send" />
-            </LinearLayout>
-        </LinearLayout>
+                    <EditText
+                        android:id="@+id/editMessage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Escribe un mensaje..."
+                        android:background="@null"
+                        android:padding="8dp"
+                        android:maxLines="4"
+                        android:textSize="16sp"
+                        android:fontFamily="@font/tipo2"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSend"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:icon="@drawable/ic_send"
+                        app:iconTint="@color/white"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:cornerRadius="24dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </RelativeLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/navigationBar"
+    <!-- Bottom Navigation -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
-        android:elevation="8dp"
-        android:orientation="horizontal"
-        android:weightSum="6">
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:cardElevation="8dp"
+        app:cardCornerRadius="0dp">
 
-        <ImageView
-            android:id="@+id/ivHome"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_home"
-            android:contentDescription="Inicio" />
+        <LinearLayout
+            android:id="@+id/navigationBar"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:background="@color/white"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:paddingVertical="8dp">
 
-        <ImageView
-            android:id="@+id/ivLupa"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_search"
-            android:contentDescription="Buscar" />
+            <ImageView
+                android:id="@+id/ivHome"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_home"
+                android:contentDescription="Inicio"/>
 
-        <ImageView
-            android:id="@+id/ivChef"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_menu"
-            android:contentDescription="Recetas" />
+            <ImageView
+                android:id="@+id/ivLupa"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_search"
+                android:contentDescription="Buscar"/>
 
-        <ImageView
-            android:id="@+id/ivMensaje"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_message"
-            android:contentDescription="Mensajes" />
+            <ImageView
+                android:id="@+id/ivChef"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="Recetas"/>
 
-        <ImageView
-            android:id="@+id/ivCarta"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_emaill"
-            android:contentDescription="Notificaciones" />
+            <ImageView
+                android:id="@+id/ivMensaje"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_message"
+                android:contentDescription="Mensajes"/>
 
-        <ImageView
-            android:id="@+id/ivCalendario"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_calendar"
-            android:contentDescription="Calendario" />
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/ivCarta"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_email"
+                android:contentDescription="Notificaciones"/>
 
-</RelativeLayout>
+            <ImageView
+                android:id="@+id/ivCalendario"
+                style="@style/BottomNavIcon"
+                android:src="@drawable/ic_calendar"
+                android:contentDescription="Calendario"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
