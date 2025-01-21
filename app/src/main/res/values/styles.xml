@@ -130,4 +130,10 @@
         <item name="tint">@color/icon_default</item>
         <item name="android:tintMode">src_in</item>
     </style>
+
+    <style name="Theme.YourApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary_purple</item>
+        <item name="colorPrimaryDark">@color/primary_purple_dark</item>
+        <item name="android:statusBarColor">@color/status_bar</item>
+    </style>
 </resources>

@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/background_light">
 
-    <!-- Header de chat -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -31,7 +30,7 @@
                 android:layout_height="48dp"
                 android:src="@drawable/default_profile"
                 app:civ_border_width="2dp"
-                app:civ_border_color="@color/accent_light"/>
+                app:civ_border_color="@color/pink_strong"/>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -102,14 +101,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/button_primary"
+                    android:backgroundTint="@color/pink_strong"
                     android:text="Vincular Nutriólogo"
                     android:textColor="@color/white"
                     android:fontFamily="@font/tipo3"/>
             </LinearLayout>
         </FrameLayout>
 
-        <!-- Container del chat -->
         <RelativeLayout
             android:id="@+id/chatContainer"
             android:layout_width="match_parent"
@@ -166,14 +164,13 @@
                         app:iconGravity="textStart"
                         app:iconPadding="0dp"
                         app:cornerRadius="24dp"
-                        android:backgroundTint="@color/button_primary"/>
+                        android:backgroundTint="@color/pink_strong"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </RelativeLayout>
     </RelativeLayout>
 
-    <!-- Barra de navegación -->
     <LinearLayout
         android:id="@+id/navigationBar"
         android:layout_width="match_parent"

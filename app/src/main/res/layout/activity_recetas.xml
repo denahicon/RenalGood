@@ -37,7 +37,7 @@
                 android:layout_marginTop="8dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:cardBackgroundColor="@color/accent_light">
+                app:cardBackgroundColor="@color/pink_light">
 
                 <TextView
                     android:id="@+id/tvHorario"
@@ -68,7 +68,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"
-        android:indeterminateTint="@color/progress_indicator"
+        android:indeterminateTint="@color/pink_strong"
         android:visibility="gone"/>
 
     <!-- Bottom Navigation -->

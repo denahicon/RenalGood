@@ -49,7 +49,7 @@ public class AdminActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         ivHome.setImageResource(R.drawable.ic_home);
-        ivHome.setColorFilter(getResources().getColor(R.color.red));
+        ivHome.setColorFilter(getResources().getColor(R.color.prueba));
 
         ivCedulas.setOnClickListener(v -> {
             Intent intent = new Intent(this, SolicitudesNutriologosActivity.class);

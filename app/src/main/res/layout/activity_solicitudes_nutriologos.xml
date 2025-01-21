@@ -4,103 +4,120 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#d3d3d3"
+    android:background="@color/background_light"
     tools:context=".admin.SolicitudesNutriologosActivity">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/layoutTitulo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="#FFFFFF"
-        android:elevation="4dp"
-        android:padding="16dp">
+        android:background="@color/prueba">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Solicitudes"
-            android:textColor="#000000"
-            android:fontFamily="@font/tipo3"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/tipo6"
+                android:textStyle="bold"
+                android:text="Solicitudes"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewSolicitudes"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNav"
+        android:layout_above="@id/bottomNavCard"
         android:layout_below="@id/layoutTitulo"
-        android:padding="8dp" />
+        android:clipToPadding="false"
+        android:padding="12dp"
+        android:scrollbars="none" />
 
-    <!-- ProgressBar centrado -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:indeterminateTint="@color/primary_purple"
         android:visibility="gone" />
 
-    <!-- Texto "No hay solicitudes" centrado -->
     <TextView
         android:id="@+id/tvNoSolicitudes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:drawableTop="@drawable/ic_eye_open"
+        android:drawablePadding="16dp"
+        android:fontFamily="@font/tipo7"
+        android:gravity="center"
         android:text="No hay solicitudes pendientes"
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp"
         android:visibility="gone" />
 
-    <!-- Línea divisoria sobre la barra de navegación -->
-    <View
-        android:id="@+id/divider"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomNavCard"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_above="@id/bottomNav"
-        android:background="#DDDDDD" />
-
-    <!-- Barra de navegación inferior -->
-    <LinearLayout
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
-        android:elevation="8dp"
-        android:gravity="center"
-        android:orientation="horizontal">
+        app:cardElevation="8dp">
 
-        <ImageView
-            android:id="@+id/ivHome"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:src="@drawable/ic_home" />
+        <LinearLayout
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@color/white"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
 
-        <ImageView
-            android:id="@+id/ivCedulas"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:src="@drawable/cedulas" />
+            <ImageView
+                android:id="@+id/ivHome"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_home"
+                app:tint="@color/icon_color" />
 
-        <ImageView
-            android:id="@+id/ivEmail"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:src="@drawable/ic_emaill" />
+            <ImageView
+                android:id="@+id/ivCedulas"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/cedulas"
+                app:tint="@color/primary_purple" />
 
-        <ImageView
-            android:id="@+id/ivAddRecipe"
-            android:layout_width="0dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:src="@drawable/ic_menu"
-            android:layout_gravity="center"/>
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/ivEmail"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_email"
+                app:tint="@color/icon_color" />
+
+            <ImageView
+                android:id="@+id/ivAddRecipe"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_menu"
+                app:tint="@color/icon_color" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </RelativeLayout>

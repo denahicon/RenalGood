@@ -104,7 +104,7 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:fontFamily="@font/tipo7"
-                        android:textColor="@color/progress_indicator"/>
+                        android:textColor="@color/pink_strong"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

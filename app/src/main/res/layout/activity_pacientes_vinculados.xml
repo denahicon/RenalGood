@@ -19,7 +19,6 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/teal_700"
             app:title="Pacientes Vinculados"
-            android:fontFamily="@font/tipo7"
             app:titleTextColor="@color/white"
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"/>
 

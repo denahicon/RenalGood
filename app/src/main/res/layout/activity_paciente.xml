@@ -27,7 +27,7 @@
                 android:textSize="24sp"
                 android:letterSpacing="0.02"
                 android:textStyle="bold"
-                android:fontFamily="@font/tipo3"
+                android:fontFamily="@font/tipo7"
                 android:textColor="@color/text_primary"
                 android:layout_gravity="center"/>
         </androidx.appcompat.widget.Toolbar>
@@ -46,7 +46,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Profile Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardViewProfile"
                 android:layout_width="match_parent"
@@ -68,7 +67,7 @@
                         android:layout_height="100dp"
                         android:layout_gravity="center"
                         android:scaleType="centerCrop"
-                        app:strokeColor="@color/accent_light"
+                        app:strokeColor="@color/pink_strong"
                         app:strokeWidth="2dp"
                         app:shapeAppearanceOverlay="@style/CircularImageView"/>
 
@@ -151,7 +150,7 @@
                                 app:trackThickness="12dp"
                                 app:trackCornerRadius="6dp"
                                 app:trackColor="@color/progress_track"
-                                app:indicatorColor="@color/progress_indicator"/>
+                                app:indicatorColor="@color/pink_strong"/>
 
                             <TextView
                                 android:id="@+id/tvCaloriasValue"
@@ -201,7 +200,7 @@
                         android:textSize="16sp"
                         android:layout_marginTop="16dp"
                         app:cornerRadius="28dp"
-                        android:backgroundTint="@color/button_primary"
+                        android:backgroundTint="@color/pink_strong"
                         app:elevation="0dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

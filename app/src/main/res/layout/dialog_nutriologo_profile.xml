@@ -16,7 +16,7 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="190dp"
-            android:background="@color/button_primary">
+            android:background="@color/pink_strong">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/ivNutriologoFoto"
@@ -53,7 +53,7 @@
                 <ImageView
                     style="@style/ProfileInfoIcon"
                     android:src="@drawable/ic_especialidad"
-                    app:tint="@color/button_primary"/>
+                    app:tint="@color/pink_strong"/>
 
                 <TextView
                     android:id="@+id/tvAreaEspecializacion"
@@ -66,7 +66,7 @@
                 <ImageView
                     style="@style/ProfileInfoIcon"
                     android:src="@drawable/ic_experience"
-                    app:tint="@color/button_primary"/>
+                    app:tint="@color/pink_strong"/>
 
                 <TextView
                     android:id="@+id/tvAnosExperiencia"
@@ -79,7 +79,7 @@
                 <ImageView
                     style="@style/ProfileInfoIcon"
                     android:src="@drawable/ic_location"
-                    app:tint="@color/button_primary"/>
+                    app:tint="@color/pink_strong"/>
 
                 <TextView
                     android:id="@+id/tvDireccionClinica"

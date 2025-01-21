@@ -1,74 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@color/background_light">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- Sección de detalles -->
         <TextView
             android:id="@+id/tv_detalles"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:fontFamily="@font/tipo7"
+            android:textStyle="bold"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="24dp"/>
 
-        <!-- Contenedor horizontal para imágenes -->
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp">
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp">
 
-            <!-- Contenedor de Identificación -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginEnd="8dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Identificación"
+                    android:textColor="@color/primary_purple"
+                    android:fontFamily="@font/tipo7"
                     android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:textSize="16sp"
+                    android:layout_marginBottom="12dp"/>
 
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_identificacion"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:scaleType="centerCrop"
-                    android:background="@drawable/image_border" />
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/prueba"
+                    app:shapeAppearanceOverlay="@style/RoundedImageView"/>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- Contenedor de Selfie -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginStart="8dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Selfie"
+                    android:textColor="@color/primary_purple"
+                    android:fontFamily="@font/tipo7"
                     android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:textSize="16sp"
+                    android:layout_marginBottom="12dp"/>
 
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_selfie"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:scaleType="centerCrop"
-                    android:background="@drawable/image_border" />
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/prueba"
+                    app:shapeAppearanceOverlay="@style/RoundedImageView"/>
             </LinearLayout>
-        </LinearLayout>
-
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </ScrollView>

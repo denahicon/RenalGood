@@ -105,7 +105,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="@color/progress_indicator"
+                        android:textColor="@color/pink_strong"
                         android:fontFamily="@font/tipo3"
                         android:layout_gravity="center"
                         android:layout_marginBottom="16dp"/>

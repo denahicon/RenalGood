@@ -29,7 +29,7 @@
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
                 android:textStyle="bold"
-                android:fontFamily="@font/tipo4"/>
+                android:fontFamily="@font/tipo3"/>
 
             <TextView
                 android:id="@+id/energiaAlimentoTextView"

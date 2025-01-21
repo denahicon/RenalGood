@@ -21,6 +21,7 @@
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="24sp"
+            android:textStyle="bold"
             android:fontFamily="@font/tipo7"
             app:layout_scrollFlags="scroll|enterAlways"/>
 
@@ -116,7 +117,8 @@
                 android:textColor="@color/white"
                 android:fontFamily="@font/tipo3"
                 app:cornerRadius="28dp"
-                android:backgroundTint="@color/button_primary"
+
+                android:backgroundTint="@color/pink_strong"
                 android:elevation="2dp"/>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

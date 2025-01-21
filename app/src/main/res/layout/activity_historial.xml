@@ -80,7 +80,7 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_gravity="center"
-                    android:indeterminateTint="@color/progress_indicator"
+                    android:indeterminateTint="@color/pink_strong"
                     android:visibility="gone"/>
 
                 <LinearLayout

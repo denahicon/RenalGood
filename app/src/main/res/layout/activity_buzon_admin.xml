@@ -4,137 +4,164 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#d3d3d3"
+    android:background="@color/background_light"
     android:fitsSystemWindows="true"
     tools:context=".admin.BuzonAdminActivity">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/layoutTitulo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="#FFFFFF"
-        android:elevation="4dp"
-        android:padding="16dp"
-        android:orientation="horizontal">
+        android:background="@color/prueba">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Buzón"
-            android:fontFamily="@font/tipo1"
-            android:textColor="#000000"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/tipo7"
+                android:textStyle="bold"
+                android:text="Buzón"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@id/bottomNavCard"
         android:layout_below="@id/layoutTitulo"
-        android:layout_above="@id/bottomNav"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/layoutPacientes"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPacientes"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_margin="8dp"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#DBC8CE">
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
 
-            <TextView
-                android:id="@+id/tvPacientes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pacientes"
-                android:fontFamily="@font/tipo3"
-                android:textColor="#000000"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:padding="8dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewPacientes"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="8dp" />
-        </LinearLayout>
+                android:orientation="vertical">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#000000" />
+                <TextView
+                    android:id="@+id/tvPacientes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:drawableStart="@drawable/ic_patient"
+                    android:drawablePadding="8dp"
+                    android:fontFamily="@font/tipo7"
+                    android:textStyle="bold"
+                    android:text="Pacientes"
+                    android:textColor="@color/primary_purple"
+                    android:textSize="18sp" />
 
-        <LinearLayout
-            android:id="@+id/layoutNutriologos"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewPacientes"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:padding="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNutriologos"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_margin="8dp"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#DBC8CE">
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
 
-            <TextView
-                android:id="@+id/tvNutriologos"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nutriólogos"
-                android:fontFamily="@font/tipo3"
-                android:textColor="#000000"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:padding="8dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewNutriologos"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="8dp" />
-        </LinearLayout>
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNutriologos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:drawableStart="@drawable/ic_nutritionist"
+                    android:drawablePadding="8dp"
+                    android:fontFamily="@font/tipo7"
+                    android:textStyle="bold"
+                    android:text="Nutriólogos"
+                    android:textColor="@color/primary_purple"
+                    android:textSize="18sp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewNutriologos"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:padding="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/bottomNav"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomNavCard"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
-        android:orientation="horizontal"
-        android:elevation="8dp"
-        android:gravity="center">
+        app:cardElevation="8dp">
 
-<ImageView
-    android:id="@+id/ivHome"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:src="@drawable/ic_home"
-    android:layout_gravity="center" />
+        <LinearLayout
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@color/white"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
 
-<ImageView
-    android:id="@+id/ivCedulas"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:src="@drawable/cedulas"
-    android:layout_gravity="center" />
+            <ImageView
+                android:id="@+id/ivHome"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_home"
+                app:tint="@color/icon_color" />
 
-<ImageView
-    android:id="@+id/ivEmail"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:src="@drawable/ic_emaill"
-    android:layout_gravity="center" />
+            <ImageView
+                android:id="@+id/ivCedulas"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/cedulas"
+                app:tint="@color/icon_color" />
 
-<ImageView
-    android:id="@+id/ivAddRecipe"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
-    android:layout_weight="1"
-    android:src="@drawable/ic_menu"
-    android:layout_gravity="center" />
-</LinearLayout>
+            <ImageView
+                android:id="@+id/ivEmail"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_emaill"
+                app:tint="@color/primary_purple" />
+
+            <ImageView
+                android:id="@+id/ivAddRecipe"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:src="@drawable/ic_menu"
+                app:tint="@color/icon_color" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 </RelativeLayout>
