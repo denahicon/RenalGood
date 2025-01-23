@@ -57,9 +57,6 @@
             android:name=".admin.SolicitudesNutriologosActivity"
             android:exported="false" />
         <activity
-            android:name=".auth.AdminLoginActivity"
-            android:exported="false" />
-        <activity
             android:name=".admin.AdminActivity"
             android:exported="false" />
         <activity

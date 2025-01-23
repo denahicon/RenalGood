@@ -212,12 +212,13 @@ public class CalendarioActivity extends AppCompatActivity {
             return;
         }
 
+        // En el método agendarCita()
         if (selectedDate == null) {
             Toast.makeText(this, "Por favor seleccione una fecha", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Obtener la hora seleccionada del TimePicker
+// Obtener la hora seleccionada del TimePicker
         Calendar selectedCalendar = Calendar.getInstance();
         selectedCalendar.setTime(selectedDate);
         selectedCalendar.set(Calendar.HOUR_OF_DAY, timePicker.getHour());
@@ -225,11 +226,10 @@ public class CalendarioActivity extends AppCompatActivity {
         selectedCalendar.set(Calendar.SECOND, 0);
         selectedCalendar.set(Calendar.MILLISECOND, 0);
 
-        // Log para debugging
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        Log.d("AgendarCita", "Fecha seleccionada en calendar: " + sdf.format(selectedCalendar.getTime()));
+// Log para debugging
+        Log.d("AgendarCita", "Fecha seleccionada en calendar: " + selectedCalendar.getTime());
 
-        // Validaciones
+// Validaciones
         if (!validarFechaHora(selectedCalendar)) return;
 
         String horaSeleccionada = String.format(Locale.getDefault(), "%02d:%02d",
@@ -249,8 +249,14 @@ public class CalendarioActivity extends AppCompatActivity {
         currentCalendar.set(Calendar.SECOND, 0);
         currentCalendar.set(Calendar.MILLISECOND, 0);
 
+        Log.d("Validación", "Fecha actual: " + currentCalendar.getTime());
+        Log.d("Validación", "Fecha seleccionada: " + selectedCalendar.getTime());
+        Log.d("Validación", "Día de la semana: " + selectedCalendar.get(Calendar.DAY_OF_WEEK));
+        Log.d("Validación", "Hora seleccionada: " + selectedCalendar.get(Calendar.HOUR_OF_DAY));
+
         // Validar fecha pasada
         if (selectedCalendar.before(currentCalendar)) {
+            Log.d("Validación", "Error: Fecha pasada");
             mostrarMensajeError("No se pueden agendar citas para fechas/horas pasadas");
             return false;
         }
@@ -259,6 +265,7 @@ public class CalendarioActivity extends AppCompatActivity {
         int hour = selectedCalendar.get(Calendar.HOUR_OF_DAY);
         int minute = selectedCalendar.get(Calendar.MINUTE);
         if (hour < 9 || hour > 18 || (hour == 18 && minute > 0)) {
+            Log.d("Validación", "Error: Fuera de horario laboral");
             mostrarMensajeError("Por favor seleccione un horario entre 9:00 AM y 6:00 PM");
             return false;
         }
@@ -266,6 +273,7 @@ public class CalendarioActivity extends AppCompatActivity {
         // Validar fin de semana
         int dayOfWeek = selectedCalendar.get(Calendar.DAY_OF_WEEK);
         if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+            Log.d("Validación", "Error: Fin de semana");
             mostrarMensajeError("No se pueden agendar citas en fin de semana");
             return false;
         }
@@ -283,13 +291,13 @@ public class CalendarioActivity extends AppCompatActivity {
         btnAgendar.setEnabled(enabled);
         btnAgendar.setText(buttonText);
         btnAgendar.setAlpha(enabled ? 1.0f : 0.5f);
-        if (!enabled) {
-            btnCancelarCita.setVisibility(View.GONE);
-        }
+        // Ya no manejamos la visibilidad del botón aquí
     }
 
     private void habilitarControles() {
         actualizarEstadoControles(true, "Agendar Cita");
+        btnCancelarCita.setEnabled(false);
+        btnCancelarCita.setAlpha(0.5f);
     }
 
     private void deshabilitarControles() {
@@ -298,6 +306,8 @@ public class CalendarioActivity extends AppCompatActivity {
 
     private void habilitarControlesParaNuevaCita() {
         actualizarEstadoControles(true, "Agendar Nueva Cita");
+        btnCancelarCita.setEnabled(false);
+        btnCancelarCita.setAlpha(0.5f);
     }
 
     private void crearCita(Date fechaSeleccionada, String horaSeleccionada) {
@@ -340,7 +350,13 @@ public class CalendarioActivity extends AppCompatActivity {
                             Log.d(TAG, "Cita encontrada, verificando si se puede cancelar");
                             if (AppointmentValidations.canCancelAppointment(citaTimestamp, horaStr)) {
                                 citaEncontrada = true;
-                                eliminarCita(document.getReference().getId());
+                                eliminarCita(document.getId(), () -> {
+                                    // Callback después de eliminar la cita
+                                    cardEstadoCita.setVisibility(View.GONE);
+                                    habilitarControlesParaNuevaCita();
+                                    // Recargar el estado actual
+                                    verificarCitasPendientes();
+                                });
                                 break;
                             } else {
                                 Log.d(TAG, "La cita no se puede cancelar - fuera del límite de tiempo");
@@ -352,6 +368,10 @@ public class CalendarioActivity extends AppCompatActivity {
                     }
                     if (!citaEncontrada) {
                         Log.d(TAG, "No se encontró la cita para cancelar");
+                        // Actualizar UI para reflejar que no hay cita
+                        cardEstadoCita.setVisibility(View.GONE);
+                        habilitarControlesParaNuevaCita();
+                        verificarCitasPendientes();
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -360,16 +380,16 @@ public class CalendarioActivity extends AppCompatActivity {
                 });
     }
 
-    private void eliminarCita(String citaId) {
-        Log.d(TAG, "Eliminando cita con ID: " + citaId);
+    private void eliminarCita(String citaId, Runnable onComplete) {
         db.collection("citas")
                 .document(citaId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Cita eliminada exitosamente");
                     Toast.makeText(this, "Cita cancelada exitosamente", Toast.LENGTH_SHORT).show();
-                    cardEstadoCita.setVisibility(View.GONE);
-                    habilitarControlesParaNuevaCita();
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error al eliminar la cita", e);
@@ -377,26 +397,30 @@ public class CalendarioActivity extends AppCompatActivity {
                 });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        verificarVinculacionNutriologo();
+        verificarCitasPendientes();
+    }
+
     private void verificarVinculacionNutriologo() {
+        // En el método verificarVinculacionNutriologo()
+        Log.d("Vinculación", "Verificando vinculación para paciente: " + userId);
         db.collection("vinculaciones")
                 .whereEqualTo("pacienteId", userId)
                 .whereEqualTo("estado", "activo")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
-                        // Hay una vinculación activa
-                        DocumentSnapshot vinculacion = querySnapshot.getDocuments().get(0);
-                        nutriologoId = vinculacion.getString("nutriologoId");
-                        if (nutriologoId != null && !nutriologoId.isEmpty()) {
+                        nutriologoId = querySnapshot.getDocuments().get(0).getString("nutriologoId");
+                        Log.d("Vinculación", "Nutriólogo vinculado: " + nutriologoId);
+                        if (nutriologoId != null) {
                             mostrarCalendario();
                             return;
                         }
                     }
-                    // No hay vinculación activa
-                    mostrarMensajeNoVinculado();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Calendario", "Error verificando vinculación", e);
+                    Log.d("Vinculación", "No hay vinculación activa");
                     mostrarMensajeNoVinculado();
                 });
     }
@@ -412,15 +436,15 @@ public class CalendarioActivity extends AppCompatActivity {
                 return;
             }
 
-            // Verificar si la cita puede ser cancelada usando AppointmentValidations
+            // Verificar si la cita puede ser cancelada
             boolean puedeSerCancelada = AppointmentValidations.canCancelAppointment(timestamp, hora) &&
-                    !estado.equals("rechazada");
-
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            String fechaStr = dateFormat.format(timestamp.toDate());
+                    estado.equals("confirmada"); // Solo citas confirmadas pueden cancelarse
 
             runOnUiThread(() -> {
                 cardEstadoCita.setVisibility(View.VISIBLE);
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                String fechaStr = dateFormat.format(timestamp.toDate());
                 tvFechaHoraCita.setText(String.format("Fecha: %s\nHora: %s", fechaStr, hora));
 
                 String mensaje;
@@ -431,15 +455,21 @@ public class CalendarioActivity extends AppCompatActivity {
                         mensaje = String.format("¡Tu cita está confirmada!\nFecha: %s\nHora: %s",
                                 fechaStr, hora);
                         colorFondo = ContextCompat.getColor(this, R.color.green);
+                        btnCancelarCita.setEnabled(puedeSerCancelada);
+                        btnCancelarCita.setAlpha(puedeSerCancelada ? 1.0f : 0.5f); // Efecto visual de deshabilitado
                         break;
                     case "rechazada":
                         mensaje = "Tu cita ha sido rechazada\nPuedes agendar una nueva cita";
                         colorFondo = ContextCompat.getColor(this, R.color.red);
+                        btnCancelarCita.setEnabled(false);
+                        btnCancelarCita.setAlpha(0.5f);
                         break;
                     default: // pendiente
                         mensaje = String.format("Tu cita está pendiente de confirmación\n" +
                                 "Fecha: %s\nHora: %s", fechaStr, hora);
                         colorFondo = ContextCompat.getColor(this, R.color.orange);
+                        btnCancelarCita.setEnabled(false);
+                        btnCancelarCita.setAlpha(0.5f);
                         break;
                 }
 
@@ -449,20 +479,10 @@ public class CalendarioActivity extends AppCompatActivity {
                 tvEstadoCita.setText(mensaje);
                 tvEstadoCita.setTextColor(Color.WHITE);
 
-                // Manejar visibilidad del botón de cancelar
-                btnCancelarCita.setVisibility(puedeSerCancelada ? View.VISIBLE : View.GONE);
-
-                // Asegurar que el botón esté habilitado y al frente si es visible
-                if (puedeSerCancelada) {
-                    btnCancelarCita.setEnabled(true);
-                    btnCancelarCita.bringToFront();
-                }
-
                 // Debug logs
                 Log.d(TAG, "Estado de la cita: " + estado);
                 Log.d(TAG, "¿Puede ser cancelada?: " + puedeSerCancelada);
-                Log.d(TAG, "Visibilidad del botón: " +
-                        (btnCancelarCita.getVisibility() == View.VISIBLE ? "VISIBLE" : "GONE"));
+                Log.d(TAG, "Botón habilitado: " + btnCancelarCita.isEnabled());
             });
 
         } catch (Exception e) {
@@ -546,7 +566,7 @@ public class CalendarioActivity extends AppCompatActivity {
                 .addOnSuccessListener(querySnapshot -> {
                     boolean hasFutureCita = false;
 
-                    for (DocumentSnapshot doc : querySnapshot) {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Timestamp citaTimestamp = doc.getTimestamp("fecha");
                         String hora = doc.getString("hora");
                         String estado = doc.getString("estado");
@@ -555,19 +575,11 @@ public class CalendarioActivity extends AppCompatActivity {
                             Calendar citaCalendar = Calendar.getInstance();
                             citaCalendar.setTime(citaTimestamp.toDate());
 
-                            // Establecer la hora de la cita
                             try {
                                 String[] horaParts = hora.split(":");
                                 citaCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(horaParts[0]));
                                 citaCalendar.set(Calendar.MINUTE, Integer.parseInt(horaParts[1]));
 
-                                // Si la cita ya pasó, eliminarla
-                                if (citaCalendar.before(currentTime)) {
-                                    eliminarCitaPasada(doc.getId());
-                                    continue;
-                                }
-
-                                // Solo procesar citas futuras
                                 if (citaCalendar.after(currentTime)) {
                                     switch (estado) {
                                         case "pendiente":
@@ -581,6 +593,8 @@ public class CalendarioActivity extends AppCompatActivity {
                                             mostrarEstadoCita(doc);
                                             break;
                                     }
+                                } else {
+                                    eliminarCitaPasada(doc.getId());
                                 }
                             } catch (Exception e) {
                                 Log.e(TAG, "Error parsing hora: " + hora, e);

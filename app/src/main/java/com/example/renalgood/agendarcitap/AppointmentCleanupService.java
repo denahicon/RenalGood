@@ -1,6 +1,9 @@
 package com.example.renalgood.agendarcitap;
 
+import static com.example.renalgood.agendarcitap.AppointmentValidations.cleanupExpiredAppointments;
+import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.os.Handler;
 import android.util.Log;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -88,5 +91,17 @@ public class AppointmentCleanupService {
                 "La cita del " + fechaStr + " a las " + hora + " ha sido eliminada del sistema",
                 ""
         );
+    }
+
+    public static void startPeriodicCleanup(Context context, FirebaseFirestore db) {
+        Handler handler = new Handler(context.getMainLooper());
+        Runnable cleanupTask = new Runnable() {
+            @Override
+            public void run() {
+                cleanupExpiredAppointments(db);
+                handler.postDelayed(this, 15 * 60 * 1000); // Cada 15 minutos
+            }
+        };
+        handler.post(cleanupTask);
     }
 }

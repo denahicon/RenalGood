@@ -13,12 +13,20 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Imagen de la receta -->
         <ImageView
             android:id="@+id/ivReceta"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:scaleType="centerCrop"/>
+
+        <TextView
+            android:id="@+id/tvCompatibility"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/tipo7"/>
 
         <LinearLayout
             android:layout_width="match_parent"

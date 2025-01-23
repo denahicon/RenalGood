@@ -1,5 +1,7 @@
 package com.example.renalgood.admin;
 
+import static android.content.ContentValues.TAG;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -60,7 +62,7 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
         });
 
         ivCedulas.setImageResource(R.drawable.cedulas);
-        ivCedulas.setColorFilter(getResources().getColor(R.color.red));
+        ivCedulas.setColorFilter(getResources().getColor(R.color.prueba));
 
         ivEmail.setOnClickListener(v -> {
             Intent intent = new Intent(this, BuzonAdminActivity.class);
@@ -121,13 +123,30 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
 
     private void cargarSolicitudes() {
         progressBar.setVisibility(View.VISIBLE);
-        Log.d("SolicitudesDebug", "Iniciando carga de solicitudes");
 
         db.collection("notificaciones_admin")
                 .orderBy("fecha", Query.Direction.DESCENDING)
                 .get()
-                .addOnSuccessListener(this::procesarSolicitudes)
-                .addOnFailureListener(this::manejarErrorCarga);
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    progressBar.setVisibility(View.GONE);
+                    solicitudes.clear();
+
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        tvNoSolicitudes.setVisibility(View.VISIBLE);
+                        tvNoSolicitudes.setText("No hay solicitudes pendientes");
+                        recyclerView.setVisibility(View.GONE);
+                    } else {
+                        tvNoSolicitudes.setVisibility(View.GONE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                        procesarSolicitudes(queryDocumentSnapshots);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(View.GONE);
+                    tvNoSolicitudes.setVisibility(View.VISIBLE);
+                    tvNoSolicitudes.setText("No hay solicitudes pendientes");
+                    recyclerView.setVisibility(View.GONE);
+                });
     }
 
     private void procesarSolicitudes(QuerySnapshot queryDocumentSnapshots) {
@@ -164,14 +183,12 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
 
     private void mostrarDetallesSolicitud(NotificacionAdmin solicitud) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_detalles_solicitud, null);
-
         TextView tvDetalles = dialogView.findViewById(R.id.tv_detalles);
         ImageView ivIdentificacion = dialogView.findViewById(R.id.iv_identificacion);
         ImageView ivSelfie = dialogView.findViewById(R.id.iv_selfie);
 
         tvDetalles.setText(construirTextoDetalles(solicitud));
 
-        // Cargar imágenes
         if (solicitud.getIdentificacionUrl() != null) {
             Glide.with(this)
                     .load(solicitud.getIdentificacionUrl())
@@ -179,10 +196,9 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
                     .error(R.drawable.ic_add_photo)
                     .into(ivIdentificacion);
         }
-
-        if (solicitud.getSelfieUrl() != null) {
+        if (solicitud.getPhotoUrl() != null) {
             Glide.with(this)
-                    .load(solicitud.getSelfieUrl())
+                    .load(solicitud.getPhotoUrl())
                     .placeholder(R.drawable.ic_add_photo)
                     .error(R.drawable.ic_add_photo)
                     .into(ivSelfie);
@@ -236,26 +252,6 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
                 });
     }
 
-    private void cargarImagenes(NotificacionAdmin solicitud, ImageView ivIdentificacion, ImageView ivSelfie) {
-        if (solicitud.getIdentificacionPath() != null) {
-            // Usar ImageLoadUtils en lugar de cargarImagen
-            ImageLoadUtils.cargarImagenDesdeStorage(
-                    this,  // context
-                    solicitud.getIdentificacionPath(),
-                    ivIdentificacion,
-                    R.drawable.ic_add_photo  // placeholder
-            );
-        }
-        if (solicitud.getSelfiePath() != null) {
-            ImageLoadUtils.cargarImagenDesdeStorage(
-                    this,  // context
-                    solicitud.getSelfiePath(),
-                    ivSelfie,
-                    R.drawable.ic_add_photo  // placeholder
-            );
-        }
-    }
-
     private void mostrarDialogoRechazo(NotificacionAdmin solicitud) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_rechazo_solicitud, null);
         EditText etMotivoRechazo = dialogView.findViewById(R.id.etMotivoRechazo);
@@ -283,33 +279,60 @@ public class SolicitudesNutriologosActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void showLoading() {
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+            // Deshabilitar botones durante la carga
+            recyclerView.setEnabled(false);
+        }
+    }
+
+    private void hideLoading() {
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setEnabled(true);
+        }
+    }
+
     private void aprobarSolicitud(NotificacionAdmin solicitud) {
-        progressBar.setVisibility(View.VISIBLE);
+        showLoading();
 
-        crearUsuarioYEnviarEmail(solicitud)
-                .addOnSuccessListener(uid -> guardarDatosNutriologo(uid, solicitud))
-                .addOnFailureListener(this::manejarError);
-    }
+        auth.createUserWithEmailAndPassword(solicitud.getCorreo(), "temp" + System.currentTimeMillis())
+                .addOnSuccessListener(authResult -> {
+                    String uid = authResult.getUser().getUid();
+                    solicitud.setNutriologoId(uid);
 
-    private Task<String> crearUsuarioYEnviarEmail(NotificacionAdmin solicitud) {
-        return auth.createUserWithEmailAndPassword(solicitud.getCorreo(), "temp" + System.currentTimeMillis())
-                .continueWith(task -> {
-                    String uid = task.getResult().getUser().getUid();
-                    auth.sendPasswordResetEmail(solicitud.getCorreo());
-                    return uid;
+                    auth.sendPasswordResetEmail(solicitud.getCorreo())
+                            .addOnSuccessListener(unused -> {
+                                Map<String, Object> nutriologoData = solicitud.toNutriologo();
+                                nutriologoData.put("fechaVerificacion", FieldValue.serverTimestamp());
+
+                                db.collection("nutriologos")
+                                        .document(uid)
+                                        .set(nutriologoData)
+                                        .addOnSuccessListener(aVoid -> {
+                                            db.collection("notificaciones_admin")
+                                                    .document(solicitud.getId())
+                                                    .delete()
+                                                    .addOnSuccessListener(v -> {
+                                                        hideLoading();
+                                                        Toast.makeText(SolicitudesNutriologosActivity.this,
+                                                                "Nutriólogo aprobado exitosamente",
+                                                                Toast.LENGTH_SHORT).show();
+                                                        cargarSolicitudes();
+                                                    })
+                                                    .addOnFailureListener(e -> hideLoading());
+                                        })
+                                        .addOnFailureListener(e -> hideLoading());
+                            })
+                            .addOnFailureListener(e -> hideLoading());
+                })
+                .addOnFailureListener(e -> {
+                    hideLoading();
+                    Toast.makeText(SolicitudesNutriologosActivity.this,
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
-    }
-
-    private void guardarDatosNutriologo(String uid, NotificacionAdmin solicitud) {
-        Map<String, Object> nutriologoData = solicitud.toNutriologo();
-        nutriologoData.put("id", uid);
-        nutriologoData.put("fechaVerificacion", FieldValue.serverTimestamp());
-
-        db.collection("nutriologos")
-                .document(uid)
-                .set(nutriologoData)
-                .addOnSuccessListener(unused -> eliminarSolicitudYNotificar(solicitud))
-                .addOnFailureListener(this::manejarError);
     }
 
     private void eliminarSolicitudYNotificar(NotificacionAdmin solicitud) {

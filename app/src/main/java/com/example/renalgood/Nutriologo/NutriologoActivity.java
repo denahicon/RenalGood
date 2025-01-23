@@ -13,10 +13,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
@@ -228,7 +226,7 @@ public class NutriologoActivity extends AppCompatActivity {
                 String anosExp = documentSnapshot.getString("anosExperiencia");
                 String direccion = documentSnapshot.getString("direccionClinica");
                 String correo = documentSnapshot.getString("correo");
-                String photoUrl = documentSnapshot.getString("selfieUrl"); // Usamos selfieUrl para obtener la imagen de perfil
+                String photoUrl = documentSnapshot.getString("photoUrl");
                 universidad = documentSnapshot.getString("universidad");
 
                 actualizarUI(nombre, areaEsp, anosExp, direccion, correo, photoUrl);

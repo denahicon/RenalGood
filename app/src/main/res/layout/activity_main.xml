@@ -123,16 +123,6 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         app:cornerRadius="28dp"
                         app:strokeColor="@color/accent_red"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAdminLogin"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="16dp"
-                        android:text="Acceso Administrador"
-                        android:textSize="14sp"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:textColor="@color/secondary_text"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </RelativeLayout>

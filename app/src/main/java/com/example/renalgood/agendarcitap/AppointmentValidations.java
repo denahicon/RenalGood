@@ -8,7 +8,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -27,7 +26,6 @@ public class AppointmentValidations {
                                                      String nutriologoId,
                                                      String pacienteId,
                                                      AppointmentCallback callback) {
-        // Obtener la fecha y hora actual
         Calendar currentTime = Calendar.getInstance();
         Date currentDate = currentTime.getTime();
 
@@ -156,26 +154,11 @@ public class AppointmentValidations {
     }
 
     public static boolean isValidAppointmentTime(Calendar selectedCalendar) {
-        Calendar currentCalendar = Calendar.getInstance();
-
-        selectedCalendar.set(Calendar.SECOND, 0);
-        selectedCalendar.set(Calendar.MILLISECOND, 0);
-        currentCalendar.set(Calendar.SECOND, 0);
-        currentCalendar.set(Calendar.MILLISECOND, 0);
-
-        if (selectedCalendar.before(currentCalendar)) {
-            return false;
-        }
-
         int hour = selectedCalendar.get(Calendar.HOUR_OF_DAY);
         int minute = selectedCalendar.get(Calendar.MINUTE);
-        if (hour < BUSINESS_HOURS_START || hour > BUSINESS_HOURS_END ||
-                (hour == BUSINESS_HOURS_END && minute > 0)) {
-            return false;
-        }
 
-        int dayOfWeek = selectedCalendar.get(Calendar.DAY_OF_WEEK);
-        return dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY;
+        // Horario de 9 AM a 6 PM
+        return hour >= 9 && (hour < 18 || (hour == 18 && minute == 0));
     }
 
     public static boolean canCancelAppointment(Timestamp appointmentTimestamp, String appointmentHour) {

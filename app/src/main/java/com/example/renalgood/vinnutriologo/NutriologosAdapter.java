@@ -4,14 +4,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.renalgood.Nutriologo.Nutriologo;
 import com.example.renalgood.R;
+import com.google.android.material.chip.Chip;
 import java.util.ArrayList;
 import java.util.List;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class NutriologosAdapter extends RecyclerView.Adapter<NutriologosAdapter.NutriologoViewHolder> {
     private List<Nutriologo> nutriologos = new ArrayList<>();
@@ -38,17 +39,15 @@ public class NutriologosAdapter extends RecyclerView.Adapter<NutriologosAdapter.
         Nutriologo nutriologo = nutriologos.get(position);
 
         holder.nombreTextView.setText(nutriologo.getNombre());
-        holder.especialidadTextView.setText(nutriologo.getAreaEspecializacion());
+        holder.especialidadChip.setText(nutriologo.getAreaEspecializacion());
         holder.experienciaTextView.setText("Experiencia: " + nutriologo.getAnosExperiencia() + " años");
         holder.direccionTextView.setText(nutriologo.getDireccionClinica());
 
-        // Modificar esta parte para usar selfieUrl en lugar de photoUrl
         if (nutriologo.getSelfieUrl() != null && !nutriologo.getSelfieUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(nutriologo.getSelfieUrl())
-                    .placeholder(R.drawable.default_profile) // Usar un placeholder más adecuado
+                    .placeholder(R.drawable.default_profile)
                     .error(R.drawable.default_profile)
-                    .circleCrop()
                     .into(holder.profileImageView);
         } else {
             holder.profileImageView.setImageResource(R.drawable.default_profile);
@@ -72,9 +71,9 @@ public class NutriologosAdapter extends RecyclerView.Adapter<NutriologosAdapter.
     }
 
     static class NutriologoViewHolder extends RecyclerView.ViewHolder {
-        ImageView profileImageView;
+        CircleImageView profileImageView;
         TextView nombreTextView;
-        TextView especialidadTextView;
+        Chip especialidadChip;
         TextView experienciaTextView;
         TextView direccionTextView;
 
@@ -82,7 +81,7 @@ public class NutriologosAdapter extends RecyclerView.Adapter<NutriologosAdapter.
             super(itemView);
             profileImageView = itemView.findViewById(R.id.profileImageView);
             nombreTextView = itemView.findViewById(R.id.nombreTextView);
-            especialidadTextView = itemView.findViewById(R.id.especialidadTextView);
+            especialidadChip = itemView.findViewById(R.id.especialidadChip);
             experienciaTextView = itemView.findViewById(R.id.experienciaTextView);
             direccionTextView = itemView.findViewById(R.id.direccionTextView);
         }

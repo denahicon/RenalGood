@@ -31,15 +31,79 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
     private static final String TAG = "RecetasActivity";
     private static final String PREFS_NAME = "RecetasPrefs";
     private static final String LAST_UPDATE_KEY = "lastUpdate";
-
     private RecyclerView recyclerViewRecetas;
     private TextView tvTitulo, tvHorario;
     private ProgressBar progressBar;
     private ImageView ivHome, ivLupa, ivChef, ivMensaje, ivCarta, ivCalendario;
-    private FirebaseFirestore db;
-    private RecetasAdapter recetasAdapter;
-    private List<Recipe> recetasList;
+    private FirebaseFirestore db; // Conexión a Firestore
+    private RecetasAdapter recetasAdapter; // Adaptador para el RecyclerView
+    private List<Recipe> recetasList; // Lista de recetas
     private String userId;
+    private RecipeRecommender recipeRecommender;
+    private String clinicalCondition;
+
+    private void setupRecyclerView() {
+            recetasAdapter = new RecetasAdapter(this, recetasList, this);
+            recyclerViewRecetas.setLayoutManager(new LinearLayoutManager(this));
+            recyclerViewRecetas.setAdapter(recetasAdapter);
+        }
+
+        private void loadPatientDataAndRecipes() {
+            progressBar.setVisibility(View.VISIBLE);
+
+            FirebaseFirestore.getInstance()
+                    .collection("patients")
+                    .document(userId)
+                    .get()
+                    .addOnSuccessListener(document -> {
+                        if (document.exists()) {
+                            String clinicalCondition = document.getString("clinicalSituation");
+                            Double calorieTarget = document.getDouble("calorieTarget");
+
+                            Log.d(TAG, "Datos del paciente: clinicalCondition=" + clinicalCondition
+                                    + ", calorieTarget=" + calorieTarget);
+
+                            String mealType = getCurrentMealType();
+                            tvHorario.setText("Recetas para " + mealType);
+
+                            Log.d(TAG, "Buscando recetas para: mealType=" + mealType);
+
+                            recipeRecommender.getRecommendedRecipes(
+                                    clinicalCondition,
+                                    mealType,
+                                    calorieTarget != null ? calorieTarget : 2000.0,
+                                    new RecipeRecommender.OnRecommendationsReady() {
+                                        @Override
+                                        public void onReady(List<Recipe> recommendations) {
+                                            progressBar.setVisibility(View.GONE);
+                                            recetasList.clear();
+                                            recetasList.addAll(recommendations);
+                                            recetasAdapter.notifyDataSetChanged();
+                                        }
+
+                                        @Override
+                                        public void onError(Exception e) {
+                                            progressBar.setVisibility(View.GONE);
+                                            Toast.makeText(RecetasActivity.this,
+                                                    "Error cargando recetas: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(this, "Error cargando datos del paciente",
+                                Toast.LENGTH_SHORT).show();
+                    });
+        }
+
+        @Override
+        public void onRecetaClick(Recipe recipe, ImageView imageView) {
+            Intent intent = new Intent(this, RecetaDetalleActivity.class);
+            intent.putExtra("recipeId", recipe.getId());
+            startActivity(intent);
+        }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,14 +116,18 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
             finish();
             return;
         }
+        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        recipeRecommender = new RecipeRecommender();
+        recetasList = new ArrayList<>();
 
-        userId = currentUser.getUid();
-        initializeViews();
-        setupFirebase();
-        setupRecyclerView();
-        setupNavigationListeners();
+
+        userId = currentUser.getUid(); // Obtener el ID del usuario actual
+        initializeViews(); // Inicializar vistas
+        setupFirebase(); // Configurar Firebase
+        setupRecyclerView(); // Configurar el RecyclerView
+        setupNavigationListeners(); // Configurar los listeners de navegación
         checkDayChange();
-        loadRecetasByTime();
+        loadPatientDataAndRecipes();
     }
 
     private void initializeViews() {
@@ -69,7 +137,7 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
             tvHorario = findViewById(R.id.tvHorario);
             progressBar = findViewById(R.id.progressBar);
 
-            // Navigation icons
+            // Iconos de navegación
             ivHome = findViewById(R.id.ivHome);
             ivLupa = findViewById(R.id.ivLupa);
             ivChef = findViewById(R.id.ivChef);
@@ -77,8 +145,10 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
             ivCarta = findViewById(R.id.ivCarta);
             ivCalendario = findViewById(R.id.ivCalendario);
 
+            // Cambiar el color del icono "Chef" para resaltarlo
             ivChef.setColorFilter(getResources().getColor(R.color.pink_strong));
         } catch (Exception e) {
+            // Manejo de errores en caso de fallo al inicializar las vistas
             Log.e(TAG, "Error initializing views", e);
             Toast.makeText(this, "Error initializing application", Toast.LENGTH_SHORT).show();
             finish();
@@ -87,18 +157,6 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
 
     private void setupFirebase() {
         db = FirebaseFirestore.getInstance();
-    }
-
-    private void setupRecyclerView() {
-        recetasList = new ArrayList<>();
-        String currentMealType = getCurrentMealType();
-        recetasAdapter = new RecetasAdapter(this, recetasList, this, currentMealType);
-
-        if (recyclerViewRecetas != null) {
-            recyclerViewRecetas.setLayoutManager(new LinearLayoutManager(this));
-            recyclerViewRecetas.setAdapter(recetasAdapter);
-            recetasAdapter.setUserId(userId);
-        }
     }
 
     private void setupNavigationListeners() {
@@ -116,50 +174,6 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
         startActivity(intent);
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         finish();
-    }
-
-    private void loadRecetasByTime() {
-        if (progressBar != null) {
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        String currentMealType = getCurrentMealType();
-        if (tvHorario != null) {
-            tvHorario.setText("Recetas para " + currentMealType);
-        }
-
-        db.collection("recipes")
-                .whereEqualTo("category", currentMealType)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    recetasList.clear();
-                    queryDocumentSnapshots.forEach(doc -> {
-                        Recipe recipe = doc.toObject(Recipe.class);
-                        if (recipe != null) {
-                            recipe.setId(doc.getId());
-                            recetasList.add(recipe);
-                        }
-                    });
-
-                    if (recetasAdapter != null) {
-                        recetasAdapter.notifyDataSetChanged();
-                    }
-
-                    if (progressBar != null) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-
-                    if (recetasList.isEmpty()) {
-                        showEmptyState();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (progressBar != null) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-                    Log.e(TAG, "Error loading recipes", e);
-                    Toast.makeText(this, "Error al cargar recetas: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
     }
 
     private String getCurrentMealType() {
@@ -199,14 +213,6 @@ public class RecetasActivity extends AppCompatActivity implements RecetasAdapter
                 .addOnFailureListener(e -> Log.e(TAG, "Error resetting daily calories", e));
     }
 
-    @Override
-    public void onRecetaClick(Recipe recipe, ImageView imageView) {
-        Intent intent = new Intent(this, RecetaDetalleActivity.class);
-        intent.putExtra("recipeId", recipe.getId());
-        startActivity(intent);
-    }
-
     private void showEmptyState() {
-        // Implement empty state UI
     }
 }

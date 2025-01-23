@@ -36,7 +36,6 @@ public class ListadeAlimentosActivity extends AppCompatActivity {
     private ImageView ivCarta;
     private ImageView ivCalendario;
 
-    // Mapa para almacenar los alimentos por categoría
     private Map<String, List<Alimento>> alimentosPorCategoria = new HashMap<>();
     private Map<String, List<Alimento>> alimentosCompletoPorCategoria = new HashMap<>();
 
@@ -121,13 +120,13 @@ public class ListadeAlimentosActivity extends AppCompatActivity {
             recyclerView = findViewById(R.id.recyclerViewAlimentos);
             searchView = findViewById(R.id.searchViewAlimentos);
 
-            // Referencias de navegación
             ivHome = findViewById(R.id.ivHome);
             ivLupa = findViewById(R.id.ivLupa);
             ivChef = findViewById(R.id.ivChef);
             ivMensaje = findViewById(R.id.ivMensaje);
             ivCarta = findViewById(R.id.ivCarta);
             ivCalendario = findViewById(R.id.ivCalendario);
+
         } catch (Exception e) {
             Log.e(TAG, "Error inicializando vistas: " + e.getMessage());
             Toast.makeText(this, "Error iniciando la aplicación", Toast.LENGTH_SHORT).show();

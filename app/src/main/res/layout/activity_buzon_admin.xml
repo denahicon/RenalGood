@@ -151,7 +151,7 @@
                 android:layout_height="28dp"
                 android:layout_weight="1"
                 android:padding="2dp"
-                android:src="@drawable/ic_emaill"
+                android:src="@drawable/ic_email"
                 app:tint="@color/primary_purple" />
 
             <ImageView

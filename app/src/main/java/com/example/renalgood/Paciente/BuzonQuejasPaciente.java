@@ -113,7 +113,7 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
             finish();
         });
 
-        ivCarta.setImageResource(R.drawable.ic_emaill);
+        ivCarta.setImageResource(R.drawable.ic_email);
         ivCarta.setColorFilter(getResources().getColor(R.color.pink_strong));
 
         ivCalendario.setOnClickListener(v -> {

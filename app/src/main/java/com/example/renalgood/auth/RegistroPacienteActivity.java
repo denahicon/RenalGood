@@ -19,6 +19,10 @@ import com.example.renalgood.Paciente.PacienteActivity;
 import com.example.renalgood.Paciente.PatientData;
 import com.example.renalgood.R;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -361,6 +365,10 @@ public class RegistroPacienteActivity extends AppCompatActivity {
         progressBarLoading.setVisibility(View.VISIBLE);
         btnSiguiente.setEnabled(false);
         btnVolver.setEnabled(false);
+
+        // Configura el idioma de Firebase
+        firebaseManager.getAuth().setLanguageCode("es");
+
         firebaseManager.getAuth().createUserWithEmailAndPassword(patientData.getEmail(), patientData.getPassword())
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -368,13 +376,22 @@ public class RegistroPacienteActivity extends AppCompatActivity {
                         Log.d(TAG, "registerPatient: Usuario creado con ID=" + userId);
                         savePatientToFirestore(userId);
                     } else {
-                        Log.e(TAG, "registerPatient: Error en autenticación", task.getException());
                         progressBarLoading.setVisibility(View.GONE);
                         btnSiguiente.setEnabled(true);
                         btnVolver.setEnabled(true);
-                        DialogUtils.showErrorDialog(this,
-                                "Error",
-                                "Error al registrar: " + task.getException().getMessage());
+
+                        String errorMessage;
+                        Exception e = task.getException();
+                        if (e instanceof FirebaseAuthUserCollisionException) {
+                            errorMessage = "Este correo ya está registrado en RenalGood";
+                        } else if (e instanceof FirebaseAuthWeakPasswordException) {
+                            errorMessage = "La contraseña debe tener al menos 6 caracteres";
+                        } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
+                            errorMessage = "El formato del correo electrónico no es válido";
+                        } else {
+                            errorMessage = "Error al registrar: " + e.getMessage();
+                        }
+                        DialogUtils.showErrorDialog(this, "Error", errorMessage);
                     }
                 });
     }

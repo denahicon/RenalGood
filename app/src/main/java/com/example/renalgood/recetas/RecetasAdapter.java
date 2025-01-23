@@ -2,22 +2,20 @@ package com.example.renalgood.recetas;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.renalgood.R;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -37,27 +35,22 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
     private static final String TAG = "RecetasAdapter";
     private String selectedRecipeId = null;
 
+    public void updateRecipes(List<Recipe> newRecipes) {
+        this.recetas = newRecipes;
+        notifyDataSetChanged();
+    }
 
     public interface OnRecetaClickListener {
         void onRecetaClick(Recipe recipe, ImageView imageView);
     }
 
-    public RecetasAdapter(Context context, List<Recipe> recetas, OnRecetaClickListener listener, String currentMealType) {
-        this.context = context;
-        this.recetas = recetas;
-        this.listener = listener;
-        this.currentMealType = currentMealType;
-        this.db = FirebaseFirestore.getInstance();
-
-        SharedPreferences prefs = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-        this.userId = prefs.getString("userId", null);
-
-        // Cargar selección existente al iniciar
-        if (userId != null) {
-            checkExistingSelection();
+        public RecetasAdapter(Context context, List<Recipe> recetas, OnRecetaClickListener listener) {
+            this.context = context;
+            this.recetas = recetas;
+            this.listener = listener;
+            this.db = FirebaseFirestore.getInstance();
+            this.userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         }
-    }
-
     @NonNull
     @Override
     public RecetaViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -68,72 +61,47 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
     @Override
     public void onBindViewHolder(@NonNull RecetaViewHolder holder, int position) {
         final Recipe recipe = recetas.get(position);
-
-        checkExistingSelection();
-
         holder.tvNombreReceta.setText(recipe.getName());
         holder.tvCalorias.setText(recipe.getCalories() + " kcal");
 
-        // Cargar imagen usando Glide
+        // Mostrar indicador de compatibilidad basado en el score
+        if (recipe.getScore() >= 0.8) {
+            holder.tvCompatibility.setText("Muy recomendada");
+            holder.tvCompatibility.setTextColor(context.getColor(R.color.green));
+        } else if (recipe.getScore() >= 0.6) {
+            holder.tvCompatibility.setText("Recomendada");
+            holder.tvCompatibility.setTextColor(context.getColor(R.color.orange));
+        } else {
+            holder.tvCompatibility.setText("Compatible");
+            holder.tvCompatibility.setTextColor(context.getColor(R.color.gray));
+        }
+
         if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
             Glide.with(context)
                     .load(recipe.getImageUrl())
                     .into(holder.ivReceta);
         }
 
-        // Restaurar estado del checkbox
-        holder.checkBoxReceta.setOnCheckedChangeListener(null);
-        holder.checkBoxReceta.setChecked(recipe.getId().equals(selectedRecipeId));
-
-        holder.checkBoxReceta.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (selectedRecipeId != null && !selectedRecipeId.equals(recipe.getId())) {
-                    // Si ya hay otra receta seleccionada, mostrar mensaje
-                    buttonView.setChecked(false);
-                    Toast.makeText(context,
-                            "Debes deseleccionar la receta actual antes de seleccionar otra",
-                            Toast.LENGTH_LONG).show();
-                } else if (selectedRecipeId == null) {
-                    // Mostrar diálogo de confirmación para seleccionar
-                    new AlertDialog.Builder(context)
-                            .setTitle("Seleccionar receta")
-                            .setMessage("¿Deseas seleccionar " + recipe.getName() + "?")
-                            .setPositiveButton("Sí", (dialog, which) -> {
-                                selectedRecipeId = recipe.getId();
-                                updateUserCalories(recipe.getCalories(), recipe.getId());
-                                updateUserMealSelection(recipe);
-                                notifyDataSetChanged();
-                            })
-                            .setNegativeButton("No", (dialog, which) -> {
-                                buttonView.setChecked(false);
-                            })
-                            .show();
-                }
-            } else {
-                // Si se intenta deseleccionar, mostrar diálogo de confirmación
-                if (recipe.getId().equals(selectedRecipeId)) {
-                    new AlertDialog.Builder(context)
-                            .setTitle("Deseleccionar receta")
-                            .setMessage("¿Estás seguro que deseas deseleccionar " + recipe.getName() + "?")
-                            .setPositiveButton("Sí", (dialog, which) -> {
-                                selectedRecipeId = null;
-                                resetDailyCalories();
-                                removeUserMealSelection();
-                                notifyDataSetChanged();
-                            })
-                            .setNegativeButton("No", (dialog, which) -> {
-                                buttonView.setChecked(true);
-                            })
-                            .show();
-                }
-            }
-        });
-
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onRecetaClick(recipe, holder.ivReceta);
             }
         });
+    }
+
+    static class RecetaViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivReceta;
+        TextView tvNombreReceta;
+        TextView tvCalorias;
+        TextView tvCompatibility;  // Añadir al layout
+
+        RecetaViewHolder(View itemView) {
+            super(itemView);
+            ivReceta = itemView.findViewById(R.id.ivReceta);
+            tvNombreReceta = itemView.findViewById(R.id.tvNombreReceta);
+            tvCalorias = itemView.findViewById(R.id.tvCalorias);
+            tvCompatibility = itemView.findViewById(R.id.tvCompatibility);
+        }
     }
 
     private void resetDailyCalories() {
@@ -346,20 +314,5 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
     public void setUserId(String userId) {
         this.userId = userId;
         Log.d(TAG, "UserId actualizado: " + userId);
-    }
-
-    static class RecetaViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivReceta;
-        TextView tvNombreReceta;
-        TextView tvCalorias;
-        CheckBox checkBoxReceta;
-
-        RecetaViewHolder(View itemView) {
-            super(itemView);
-            ivReceta = itemView.findViewById(R.id.ivReceta);
-            tvNombreReceta = itemView.findViewById(R.id.tvNombreReceta);
-            tvCalorias = itemView.findViewById(R.id.tvCalorias);
-            checkBoxReceta = itemView.findViewById(R.id.checkBoxReceta);
-        }
     }
 }

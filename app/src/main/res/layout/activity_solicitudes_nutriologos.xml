@@ -56,12 +56,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:drawableTop="@drawable/ic_eye_open"
+        android:drawableTop="@drawable/ic_visibility"
         android:drawablePadding="16dp"
         android:fontFamily="@font/tipo7"
         android:gravity="center"
         android:text="No hay solicitudes pendientes"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:visibility="gone" />
 

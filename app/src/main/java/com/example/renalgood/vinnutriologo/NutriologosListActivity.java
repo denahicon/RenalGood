@@ -7,7 +7,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.renalgood.Chat.ChatActivity;
 import com.example.renalgood.R;
 import com.google.firebase.auth.FirebaseAuth;

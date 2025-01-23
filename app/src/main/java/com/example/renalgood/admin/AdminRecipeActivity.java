@@ -1,7 +1,6 @@
 package com.example.renalgood.admin;
 
 import android.os.Bundle;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.renalgood.R;
@@ -10,7 +9,8 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
-
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,6 +30,9 @@ public class AdminRecipeActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private Uri selectedImageUri;
     private static final int PICK_IMAGE_REQUEST = 1;
+    private TextInputEditText edtPotassium, edtPhosphorus, edtSodium;
+    private ChipGroup chipGroupConditions;
+    private Chip chipERCA, chipHemodialysis, chipPeritoneal, chipTransplant;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +63,14 @@ public class AdminRecipeActivity extends AppCompatActivity {
         ivCedulas = findViewById(R.id.ivCedulas);
         ivEmail = findViewById(R.id.ivEmail);
         ivAddRecipe = findViewById(R.id.ivAddRecipe);
+        edtPotassium = findViewById(R.id.edtPotassium);
+        edtPhosphorus = findViewById(R.id.edtPhosphorus);
+        edtSodium = findViewById(R.id.edtSodium);
+        chipGroupConditions = findViewById(R.id.chipGroupConditions);
+        chipERCA = findViewById(R.id.chipERCA);
+        chipHemodialysis = findViewById(R.id.chipHemodialysis);
+        chipPeritoneal = findViewById(R.id.chipPeritoneal);
+        chipTransplant = findViewById(R.id.chipTransplant);
     }
 
     private void setupFirebase() {
@@ -84,7 +95,7 @@ public class AdminRecipeActivity extends AppCompatActivity {
         });
 
         ivAddRecipe.setImageResource(R.drawable.ic_menu);
-        ivAddRecipe.setColorFilter(getResources().getColor(R.color.red));
+        ivAddRecipe.setColorFilter(getResources().getColor(R.color.prueba));
     }
 
     private void setupCategorySpinner() {
@@ -150,65 +161,13 @@ public class AdminRecipeActivity extends AppCompatActivity {
         }
     }
 
-    private boolean validateInputs() {
-        if (selectedImageUri == null) {
-            showToast("Por favor selecciona una imagen");
-            return false;
-        }
-        if (TextUtils.isEmpty(edtRecipeName.getText())) {
-            edtRecipeName.setError("Campo requerido");
-            return false;
-        }
-        // Añade más validaciones según necesites
-        return true;
-    }
-
-    private void uploadRecipe() {
-        showLoading();
-
-        String imageFileName = "recipe-images/" + UUID.randomUUID().toString() + ".jpg";
-        StorageReference imageRef = storage.getReference().child(imageFileName);
-
-        imageRef.putFile(selectedImageUri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    return imageRef.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUrl -> {
-                    Map<String, Object> recipe = new HashMap<>();
-                    recipe.put("name", edtRecipeName.getText().toString());
-                    recipe.put("category", spinnerCategory.getText().toString());
-                    recipe.put("calories", Integer.parseInt(edtCalories.getText().toString()));
-                    recipe.put("nutrients", getNutrientsMap());
-                    recipe.put("ingredients", getIngredientsList());
-                    recipe.put("instructions", getStepsList());
-                    recipe.put("imageUrl", downloadUrl.toString());
-                    recipe.put("timestamp", FieldValue.serverTimestamp());
-
-                    db.collection("recipes")
-                            .add(recipe)
-                            .addOnSuccessListener(documentReference -> {
-                                hideLoading();
-                                showToast("Receta guardada exitosamente");
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                hideLoading();
-                                showToast("Error al guardar la receta: " + e.getMessage());
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    hideLoading();
-                    showToast("Error al subir la imagen: " + e.getMessage());
-                });
-    }
-
     private Map<String, Double> getNutrientsMap() {
         Map<String, Double> nutrients = new HashMap<>();
         nutrients.put("protein", Double.parseDouble(edtProtein.getText().toString()));
         nutrients.put("carbs", Double.parseDouble(edtCarbs.getText().toString()));
+        nutrients.put("potassium", Double.parseDouble(edtPotassium.getText().toString()));
+        nutrients.put("phosphorus", Double.parseDouble(edtPhosphorus.getText().toString()));
+        nutrients.put("sodium", Double.parseDouble(edtSodium.getText().toString()));
         return nutrients;
     }
 
@@ -256,5 +215,114 @@ public class AdminRecipeActivity extends AppCompatActivity {
 
     private void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean validateInputs() {
+        if (selectedImageUri == null) {
+            showToast("Por favor selecciona una imagen");
+            return false;
+        }
+        if (!validateField(edtRecipeName, "Nombre") ||
+                !validateField(edtCalories, "Calorías") ||
+                !validateField(edtProtein, "Proteínas") ||
+                !validateField(edtCarbs, "Carbohidratos") ||
+                !validateField(edtPotassium, "Potasio") ||
+                !validateField(edtPhosphorus, "Fósforo") ||
+                !validateField(edtSodium, "Sodio")) {
+            return false;
+        }
+
+        if (!chipERCA.isChecked() && !chipHemodialysis.isChecked() &&
+                !chipPeritoneal.isChecked() && !chipTransplant.isChecked()) {
+            showToast("Selecciona al menos una condición clínica");
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean validateField(TextInputEditText field, String fieldName) {
+        String value = field.getText().toString().trim();
+
+        if (value.isEmpty()) {
+            field.setError(fieldName + " es requerido");
+            return false;
+        }
+
+        // Solo validar como número si es un campo nutricional
+        if (fieldName.equals("Calorías") ||
+                fieldName.equals("Proteínas") ||
+                fieldName.equals("Carbohidratos") ||
+                fieldName.equals("Potasio") ||
+                fieldName.equals("Fósforo") ||
+                fieldName.equals("Sodio")) {
+            try {
+                double numValue = Double.parseDouble(value);
+                if (numValue <= 0) {
+                    field.setError(fieldName + " debe ser mayor a 0");
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                field.setError(fieldName + " debe ser un número válido");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void uploadRecipe() {
+        if (!validateInputs()) return;
+        showLoading();
+
+        String imageFileName = "recipe-images/" + UUID.randomUUID().toString() + ".jpg";
+        StorageReference imageRef = storage.getReference().child(imageFileName);
+
+        imageRef.putFile(selectedImageUri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    return imageRef.getDownloadUrl();
+                })
+                .addOnSuccessListener(downloadUrl -> {
+                    Map<String, Object> recipe = new HashMap<>();
+                    recipe.put("name", edtRecipeName.getText().toString());
+                    recipe.put("category", spinnerCategory.getText().toString());
+                    recipe.put("calories", Integer.parseInt(edtCalories.getText().toString()));
+                    recipe.put("nutrients", getNutrientsMap());
+                    recipe.put("ingredients", getIngredientsList());
+                    recipe.put("instructions", getStepsList());
+                    recipe.put("imageUrl", downloadUrl.toString());
+                    recipe.put("timestamp", FieldValue.serverTimestamp());
+                    recipe.put("suitableConditions", getSuitableConditions());
+
+                    saveRecipeToFirestore(recipe);
+                })
+                .addOnFailureListener(e -> {
+                    hideLoading();
+                    showToast("Error al subir la imagen: " + e.getMessage());
+                });
+    }
+
+    private List<String> getSuitableConditions() {
+        List<String> conditions = new ArrayList<>();
+        if (chipERCA.isChecked()) conditions.add("ERCA");
+        if (chipHemodialysis.isChecked()) conditions.add("hemodialysis");
+        if (chipPeritoneal.isChecked()) conditions.add("peritoneal_dialysis");
+        if (chipTransplant.isChecked()) conditions.add("transplant");
+        return conditions;
+    }
+
+    private void saveRecipeToFirestore(Map<String, Object> recipe) {
+        db.collection("recipes")
+                .add(recipe)
+                .addOnSuccessListener(documentReference -> {
+                    hideLoading();
+                    showToast("Receta guardada exitosamente");
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    hideLoading();
+                    showToast("Error al guardar la receta: " + e.getMessage());
+                });
     }
 }

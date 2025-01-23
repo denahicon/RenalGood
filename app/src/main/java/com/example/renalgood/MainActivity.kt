@@ -11,7 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.renalgood.Nutriologo.NutriologoActivity
 import com.example.renalgood.Paciente.PacienteActivity
-import com.example.renalgood.auth.AdminLoginActivity
+import com.example.renalgood.admin.AdminActivity
 import com.example.renalgood.auth.RecuperarContrasenaActivity
 import com.example.renalgood.auth.RegistroNutriologoActivity
 import com.example.renalgood.auth.RegistroPacienteActivity
@@ -28,10 +28,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonLogin: Button
     private lateinit var buttonRecuperar: Button
     private lateinit var spinnerRegistro: AutoCompleteTextView
-    private lateinit var buttonAdmin: Button
     private lateinit var mAuth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private val userCache = mutableMapOf<String, Pair<String, Long>>()
+    private val userCache = mutableMapOf<String, Triple<String, Long, DocumentSnapshot>>()
     private val CACHE_DURATION = 5 * 60 * 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,15 +41,26 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         setupSpinner()
         setupClickListeners()
+        checkPreviousSession()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        userCache.clear()
+    private fun checkPreviousSession() {
+        val prefs = getSharedPreferences("login_prefs", MODE_PRIVATE)
+        val shouldRemainLoggedIn = prefs.getBoolean("keep_session", false)
+
+        if (!shouldRemainLoggedIn) {
+            mAuth.signOut()
+            return
+        }
+
+        mAuth.currentUser?.let { user ->
+            verificarTipoUsuario(user.uid)
+        }
     }
 
     private fun initializeFirebase() {
         mAuth = FirebaseAuth.getInstance()
+        mAuth.setLanguageCode("es")
         db = FirebaseFirestore.getInstance()
     }
 
@@ -59,8 +69,7 @@ class MainActivity : AppCompatActivity() {
         editTextPassword = findViewById(R.id.contrasena)
         buttonLogin = findViewById(R.id.iniciar)
         buttonRecuperar = findViewById(R.id.recuperar_contrasena)
-        spinnerRegistro = findViewById(R.id.registro_spinner)  // Este ID debe coincidir con el AutoCompleteTextView
-        buttonAdmin = findViewById(R.id.btnAdminLogin)
+        spinnerRegistro = findViewById(R.id.registro_spinner)
     }
 
     private fun setupSpinner() {
@@ -78,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                     "Nutriologo" -> irANutriologoRegistro()
                     "Paciente" -> irAPacienteRegistro()
                 }
-                spinnerRegistro.setText("", false)  // Resetear el spinner
+                spinnerRegistro.setText("", false)
             }
         }
     }
@@ -86,9 +95,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         buttonLogin.setOnClickListener { realizarInicioSesion() }
         buttonRecuperar.setOnClickListener { irARecuperarContrasena() }
-        buttonAdmin.setOnClickListener {
-            startActivity(Intent(this, AdminLoginActivity::class.java))
-        }
     }
 
     private fun realizarInicioSesion() {
@@ -111,37 +117,12 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun verificarAdmin(uid: String?) {
-        if (uid == null) {
-            Toast.makeText(this, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        db.collection("admins")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    // Es admin, ir a panel de admin
-                    irAPanelAdmin()
-                } else {
-                    // No es admin
-                    Toast.makeText(this, "No tienes permisos de administrador", Toast.LENGTH_SHORT).show()
-                    mAuth.signOut()
-                }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error al verificar permisos: ${e.message}", Toast.LENGTH_SHORT).show()
-                mAuth.signOut()
-            }
-    }
-
     private fun verificarTipoUsuario(userId: String) {
         // Verificar cache primero
-        userCache[userId]?.let { (tipo, timestamp) ->
+        userCache[userId]?.let { (tipo, timestamp, docSnapshot) ->
             if (System.currentTimeMillis() - timestamp < CACHE_DURATION) {
                 when (tipo) {
-                    "nutriologo" -> irANutriologo()
+                    "nutriologo" -> procesarLoginNutriologo(docSnapshot)
                     "paciente" -> irAPaciente()
                     "admin" -> irAPanelAdmin()
                     else -> verificarEnFirestore(userId)
@@ -153,30 +134,6 @@ class MainActivity : AppCompatActivity() {
         verificarEnFirestore(userId)
     }
 
-    private fun verificarOtrosTiposUsuario(userId: String) {
-        // Verificar si es paciente o admin como lo tenías antes
-        db.collection("patients")
-            .document(userId)
-            .get()
-            .addOnSuccessListener { patientDoc ->
-                if (patientDoc.exists()) {
-                    irAPaciente()
-                } else {
-                    db.collection("admins")
-                        .document(userId)
-                        .get()
-                        .addOnSuccessListener { adminDoc ->
-                            if (adminDoc.exists()) {
-                                irAPanelAdmin()
-                            } else {
-                                Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_LONG).show()
-                                mAuth.signOut()
-                            }
-                        }
-                }
-            }
-    }
-
     private fun verificarEnFirestore(userId: String) {
         // Crear batch de consultas
         val nutriologoRef = db.collection("nutriologos").document(userId)
@@ -184,124 +141,66 @@ class MainActivity : AppCompatActivity() {
         val adminRef = db.collection("admins").document(userId)
 
         db.runTransaction { transaction ->
-            val nutriDoc = transaction.get(nutriologoRef)
-
-            if (nutriDoc.exists()) {
-                val estado = nutriDoc.getString("estado") ?: ""
-                val verificado = nutriDoc.getBoolean("verificado") ?: false
-
-                when {
-                    verificado && (estado == "aprobado" || estado == "activo") -> {
-                        // Guardar en cache
-                        userCache[userId] = "nutriologo" to System.currentTimeMillis()
-                        runOnUiThread { irANutriologo() }
-                    }
-                    !verificado -> {
-                        runOnUiThread {
-                            Toast.makeText(this, "Tu cuenta está pendiente de verificación",
-                                Toast.LENGTH_LONG).show()
-                            mAuth.signOut()
-                        }
-                    }
-                    else -> {
-                        runOnUiThread {
-                            Toast.makeText(this, "Tu cuenta no está aprobada",
-                                Toast.LENGTH_LONG).show()
-                            mAuth.signOut()
-                        }
-                    }
-                }
-                return@runTransaction
-            }
-
-            // Si no es nutriólogo, verificar paciente
-            val patientDoc = transaction.get(pacienteRef)
-            if (patientDoc.exists()) {
-                userCache[userId] = "paciente" to System.currentTimeMillis()
-                runOnUiThread { irAPaciente() }
-                return@runTransaction
-            }
-
-            // Si no es paciente, verificar admin
+            // Primero verificar si es admin
             val adminDoc = transaction.get(adminRef)
             if (adminDoc.exists()) {
-                userCache[userId] = "admin" to System.currentTimeMillis()
+                userCache[userId] = Triple("admin", System.currentTimeMillis(), adminDoc)
                 runOnUiThread { irAPanelAdmin() }
+                return@runTransaction
+            }
+
+            // Luego verificar si es nutriólogo
+            val nutriDoc = transaction.get(nutriologoRef)
+            if (nutriDoc.exists()) {
+                userCache[userId] = Triple("nutriologo", System.currentTimeMillis(), nutriDoc)
+                runOnUiThread { procesarLoginNutriologo(nutriDoc) }
+                return@runTransaction
+            }
+
+            // Finalmente verificar si es paciente
+            val patientDoc = transaction.get(pacienteRef)
+            if (patientDoc.exists()) {
+                userCache[userId] = Triple("paciente", System.currentTimeMillis(), patientDoc)
+                runOnUiThread { irAPaciente() }
                 return@runTransaction
             }
 
             // Si no existe en ninguna colección
             runOnUiThread {
                 Log.e(TAG, "Usuario no encontrado en ninguna colección")
-                Toast.makeText(this, "Error: Usuario no encontrado",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error: Usuario no encontrado", Toast.LENGTH_SHORT).show()
                 mAuth.signOut()
             }
         }.addOnFailureListener { e ->
             Log.e(TAG, "Error en verificación", e)
-            Toast.makeText(this, "Error de verificación: ${e.message}",
-                Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Error de verificación: ${e.message}", Toast.LENGTH_SHORT).show()
             mAuth.signOut()
         }
     }
 
-    private fun actualizarTipoUsuario(userId: String, tipoUsuario: String) {
-        val userDoc = hashMapOf(
-            "tipoUsuario" to tipoUsuario,
-            "email" to mAuth.currentUser?.email,
-            "lastLogin" to System.currentTimeMillis()
-        )
+    private fun procesarLoginNutriologo(nutriDoc: DocumentSnapshot) {
+        val estado = nutriDoc.getString("estado") ?: ""
+        val verificado = nutriDoc.getBoolean("verificado") ?: false
 
-        db.collection("users").document(userId)
-            .set(userDoc)
-            .addOnSuccessListener {
-                Log.d(TAG, "Tipo de usuario actualizado a: $tipoUsuario")
-                when (tipoUsuario) {
-                    "Nutriologo" -> irANutriologo()
-                    "Paciente" -> irAPaciente()
-                }
+        when {
+            verificado && (estado == "aprobado" || estado == "activo") -> {
+                irANutriologo()
             }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error al actualizar tipo de usuario", e)
-                Toast.makeText(this, "Error al actualizar tipo de usuario: ${e.message}", Toast.LENGTH_SHORT).show()
+            !verificado -> {
+                Toast.makeText(this, "Tu cuenta está pendiente de verificación",
+                    Toast.LENGTH_LONG).show()
+                mAuth.signOut()
             }
-    }
-
-    private fun verificarEstadoNutriologo(uid: String) {
-        db.collection("nutriologos")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { documentSnapshot: DocumentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    val verificado = documentSnapshot.getBoolean("verificado")
-                    if (verificado != null && verificado) {
-                        actualizarTipoUsuario(uid, "Nutriologo")
-                    } else {
-                        Toast.makeText(
-                            this, "Tu cuenta aún no ha sido verificada",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        FirebaseAuth.getInstance().signOut()
-                    }
-                } else {
-                    Toast.makeText(
-                        this, "No se encontró la información del nutriólogo",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    FirebaseAuth.getInstance().signOut()
-                }
+            else -> {
+                Toast.makeText(this, "Tu cuenta no está aprobada",
+                    Toast.LENGTH_LONG).show()
+                mAuth.signOut()
             }
-    }
-
-    private fun limpiarCacheExpirado() {
-        val currentTime = System.currentTimeMillis()
-        userCache.entries.removeAll { (_, value) ->
-            currentTime - value.second > CACHE_DURATION
         }
     }
 
     private fun irAPanelAdmin() {
-        val intent = Intent(this, AdminLoginActivity::class.java)
+        val intent = Intent(this, AdminActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
@@ -327,5 +226,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun irARecuperarContrasena() {
         startActivity(Intent(this, RecuperarContrasenaActivity::class.java))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        userCache.clear()
     }
 }

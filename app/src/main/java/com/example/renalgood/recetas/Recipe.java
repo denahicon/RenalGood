@@ -6,20 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 public class Recipe implements Serializable {
-    // Propiedades básicas
     private String id;
     private String name;
     private String category;
     private int calories;
     private String imageUrl;
-
-    // Propiedades adicionales
+    private double score;
     private List<Ingredient> ingredients;
     private List<String> instructions;
     private Map<String, Double> nutrients;
     private Timestamp timestamp;
-
-    // Constructor vacío necesario para Firestore
     public Recipe() {}
 
     // Constructor completo
@@ -118,5 +114,13 @@ public class Recipe implements Serializable {
 
     public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
     }
 }

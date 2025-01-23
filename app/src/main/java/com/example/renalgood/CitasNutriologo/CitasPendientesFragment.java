@@ -112,7 +112,6 @@ public class CitasPendientesFragment extends Fragment implements CitasAdapter.Ci
                             cita.setId(doc.getId());
                             cita.setNutriologoId(doc.getString("nutriologoId"));
                             cita.setPacienteId(doc.getString("pacienteId"));
-                            cita.setPacienteNombre(doc.getString("pacienteNombre"));
 
                             // Manejar la fecha
                             if (doc.getTimestamp("fecha") != null) {
@@ -121,6 +120,23 @@ public class CitasPendientesFragment extends Fragment implements CitasAdapter.Ci
 
                             cita.setHora(doc.getString("hora"));
                             cita.setEstado(doc.getString("estado"));
+
+                            // Obtener el nombre del paciente desde la colección "patients"
+                            String pacienteId = doc.getString("pacienteId");
+                            if (pacienteId != null) {
+                                db.collection("patients")
+                                        .document(pacienteId)
+                                        .get()
+                                        .addOnSuccessListener(patientDoc -> {
+                                            if (patientDoc.exists()) {
+                                                String nombrePaciente = patientDoc.getString("name");
+                                                cita.setPacienteNombre(nombrePaciente);
+                                                citasAdapter.notifyDataSetChanged();
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> Log.e(TAG, "Error al obtener datos del paciente", e));
+                            }
+
                             citas.add(cita);
                         }
                     }

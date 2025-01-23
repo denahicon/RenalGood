@@ -57,7 +57,6 @@ public class QuejasAdapter extends RecyclerView.Adapter<QuejasAdapter.ViewHolder
                 ? "comentariosNutriologos"
                 : "comentariosPacientes";
 
-        // Primero crear la notificación
         Map<String, Object> notificacion = new HashMap<>();
         notificacion.put("userId", queja.getUserId());
         notificacion.put("mensaje", "Tu " + queja.getTipo() + " ha sido atendida por el administrador");
@@ -65,35 +64,28 @@ public class QuejasAdapter extends RecyclerView.Adapter<QuejasAdapter.ViewHolder
         notificacion.put("tipoUsuario", queja.getTipoUsuario() != null ? queja.getTipoUsuario() : "paciente");
         notificacion.put("fecha", System.currentTimeMillis());
 
-        // Usar una transacción para asegurar que ambas operaciones se completen
-        db.runTransaction(transaction -> {
-            // Agregar la notificación primero
-            db.collection("notificaciones")
-                    .add(notificacion)
-                    .addOnSuccessListener(notifRef -> {
-                        // Una vez agregada la notificación, eliminar la queja
-                        db.collection(coleccion)
-                                .document(queja.getId())
-                                .delete()
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(context,
-                                            queja.getTipo() + " atendida correctamente",
-                                            Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(context,
-                                            "Error al eliminar la " + queja.getTipo(),
-                                            Toast.LENGTH_SHORT).show();
-                                });
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(context,
-                                "Error al procesar la " + queja.getTipo(),
-                                Toast.LENGTH_SHORT).show();
-                    });
-
-            return null;
-        });
+        // Actualizar el estado primero
+        db.collection(coleccion)
+                .document(queja.getId())
+                .update("estado", "atendido")
+                .addOnSuccessListener(aVoid -> {
+                    // Después crear la notificación
+                    db.collection("notificaciones")
+                            .add(notificacion)
+                            .addOnSuccessListener(notifRef -> {
+                                // Actualizar la UI
+                                quejas.remove(queja);
+                                notifyDataSetChanged();
+                                Toast.makeText(context,
+                                        queja.getTipo() + " atendida correctamente",
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context,
+                            "Error al procesar la " + queja.getTipo(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     @Override
