@@ -60,7 +60,7 @@
                     android:fontFamily="@font/tipo2"/>
 
                 <CheckBox
-                    android:id="@+id/checkBoxReceta"
+                    android:id="@+id/cbSelected"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"

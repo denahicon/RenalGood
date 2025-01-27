@@ -238,6 +238,16 @@ public class AdminRecipeActivity extends AppCompatActivity {
             return false;
         }
 
+        if (ingredientsContainer.getChildCount() == 0) {
+            showToast("Agrega al menos un ingrediente");
+            return false;
+        }
+
+        if (stepsContainer.getChildCount() == 0) {
+            showToast("Agrega al menos un paso en las instrucciones");
+            return false;
+        }
+
         return true;
     }
 
@@ -249,7 +259,6 @@ public class AdminRecipeActivity extends AppCompatActivity {
             return false;
         }
 
-        // Solo validar como número si es un campo nutricional
         if (fieldName.equals("Calorías") ||
                 fieldName.equals("Proteínas") ||
                 fieldName.equals("Carbohidratos") ||

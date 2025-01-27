@@ -51,4 +51,5 @@
     <color name="primary_purple_light">#BB86FC</color>
     <color name="icon_color">#9E9E9E</color>
     <color name="status_bar">#3700B3</color>
+    <color name="light_selection_color">#E0E0E0</color>
 </resources>

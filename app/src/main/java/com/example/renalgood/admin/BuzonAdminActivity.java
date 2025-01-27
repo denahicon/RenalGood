@@ -80,45 +80,54 @@ public class BuzonAdminActivity extends AppCompatActivity {
     }
 
     private void cargarQuejas() {
+        // Cargar quejas de pacientes
         db.collection("comentariosPacientes")
                 .orderBy("fecha", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e("BuzonAdmin", "Error cargando quejas pacientes: " + error.getMessage());
-                        Toast.makeText(this, "Error al cargar quejas de pacientes", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     if (value != null) {
                         List<Queja> quejas = new ArrayList<>();
                         for (DocumentSnapshot document : value.getDocuments()) {
-                            Log.d("BuzonAdmin", "Documento paciente: " + document.getData());
-                            Queja queja = document.toObject(Queja.class);
-                            if (queja != null) {
-                                queja.setId(document.getId());
-                                quejas.add(queja);
+                            try {
+                                Queja queja = document.toObject(Queja.class);
+                                if (queja != null) {
+                                    queja.setId(document.getId());
+                                    quejas.add(queja);
+                                }
+                            } catch (Exception e) {
+                                Log.e("BuzonAdmin", "Error parsing queja paciente: " + e.getMessage());
                             }
                         }
-                        Log.d("BuzonAdmin", "Quejas pacientes cargadas: " + quejas.size());
                         adapterPacientes.actualizarQuejas(quejas);
                     }
                 });
 
+        // Cargar quejas de nutriólogos
         db.collection("comentariosNutriologos")
                 .orderBy("fecha", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
-                        Toast.makeText(this, "Error al cargar quejas de nutriólogos", Toast.LENGTH_SHORT).show();
+                        Log.e("BuzonAdmin", "Error cargando quejas nutriólogos: " + error.getMessage());
+                        Toast.makeText(this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     if (value != null) {
                         List<Queja> quejas = new ArrayList<>();
                         for (DocumentSnapshot document : value.getDocuments()) {
-                            Queja queja = document.toObject(Queja.class);
-                            if (queja != null) {
-                                queja.setId(document.getId());
-                                quejas.add(queja);
+                            try {
+                                Queja queja = document.toObject(Queja.class);
+                                if (queja != null) {
+                                    queja.setId(document.getId());
+                                    quejas.add(queja);
+                                }
+                            } catch (Exception e) {
+                                Log.e("BuzonAdmin", "Error parsing queja nutriólogo: " + e.getMessage());
                             }
                         }
                         adapterNutriologos.actualizarQuejas(quejas);

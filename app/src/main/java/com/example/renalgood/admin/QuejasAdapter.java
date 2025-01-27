@@ -2,6 +2,7 @@ package com.example.renalgood.admin;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,28 +64,24 @@ public class QuejasAdapter extends RecyclerView.Adapter<QuejasAdapter.ViewHolder
         notificacion.put("leida", false);
         notificacion.put("tipoUsuario", queja.getTipoUsuario() != null ? queja.getTipoUsuario() : "paciente");
         notificacion.put("fecha", System.currentTimeMillis());
+        notificacion.put("tipo", "respuesta_admin");
 
-        // Actualizar el estado primero
-        db.collection(coleccion)
-                .document(queja.getId())
-                .update("estado", "atendido")
-                .addOnSuccessListener(aVoid -> {
-                    // Después crear la notificación
-                    db.collection("notificaciones")
-                            .add(notificacion)
-                            .addOnSuccessListener(notifRef -> {
-                                // Actualizar la UI
-                                quejas.remove(queja);
-                                notifyDataSetChanged();
-                                Toast.makeText(context,
-                                        queja.getTipo() + " atendida correctamente",
-                                        Toast.LENGTH_SHORT).show();
+        db.collection("notificaciones")
+                .add(notificacion)
+                .addOnSuccessListener(notifRef -> {
+                    // Una vez creada la notificación, eliminar la queja
+                    db.collection(coleccion)
+                            .document(queja.getId())
+                            .delete()
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(context, queja.getTipo() + " atendida correctamente", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("QuejasAdapter", "Error eliminando queja: " + e.getMessage());
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(context,
-                            "Error al procesar la " + queja.getTipo(),
-                            Toast.LENGTH_SHORT).show();
+                    Log.e("QuejasAdapter", "Error creando notificación: " + e.getMessage());
                 });
     }
 

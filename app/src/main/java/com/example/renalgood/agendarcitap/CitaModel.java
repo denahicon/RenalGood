@@ -7,7 +7,6 @@ public class CitaModel {
     private String estado;
 
     public CitaModel() {
-        // Constructor vacío requerido para Firestore
     }
 
     public CitaModel(String pacienteId, String nutriologoId, long timestamp, String estado) {

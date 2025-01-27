@@ -61,14 +61,15 @@ public class NotificationService {
         }
     }
 
-    public static void sendAppointmentExpiredNotification(String pacienteId, String citaId,
-                                                          String fecha, String hora) {
-        sendNotificationToUser(pacienteId, "patients",
+    public static void sendExpirationNotification(String pacienteId, String fecha, String hora) {
+        sendNotificationToUser(
+                pacienteId,
+                "patients",
                 "appointment_expired",
-                "Cita Expirada",
-                "Tu cita para el " + fecha + " a las " + hora +
-                        " ha sido cancelada porque no fue confirmada a tiempo",
-                citaId);
+                "Cita Cancelada",
+                String.format("Tu cita para el %s a las %s ha sido cancelada porque el nutriólogo no confirmó en el tiempo establecido", fecha, hora),
+                ""
+        );
     }
 
     public static void sendAppointmentCancellation(String pacienteId, String citaId,

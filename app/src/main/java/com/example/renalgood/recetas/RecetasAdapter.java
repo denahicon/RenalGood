@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,14 +45,17 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
         void onRecetaClick(Recipe recipe, ImageView imageView);
     }
 
-        public RecetasAdapter(Context context, List<Recipe> recetas, OnRecetaClickListener listener) {
-            this.context = context;
-            this.recetas = recetas;
-            this.listener = listener;
-            this.db = FirebaseFirestore.getInstance();
-            this.userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        }
+    public RecetasAdapter(Context context, List<Recipe> recetas, OnRecetaClickListener listener) {
+        this.context = context;
+        this.recetas = recetas;
+        this.listener = listener;
+        this.db = FirebaseFirestore.getInstance();
+        this.userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        this.currentMealType = getCurrentMealType();
+        checkExistingSelection(); // Cargar selección existente al iniciar
+    }
     @NonNull
+
     @Override
     public RecetaViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_receta, parent, false);
@@ -79,8 +83,56 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
         if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
             Glide.with(context)
                     .load(recipe.getImageUrl())
+                    .placeholder(R.drawable.placeholder_recipe)
+                    .error(R.drawable.error_recipe)
                     .into(holder.ivReceta);
         }
+
+        // Configurar estado del checkbox
+        holder.cbSelected.setChecked(selectedRecipeId != null &&
+                selectedRecipeId.equals(recipe.getId()));
+
+        holder.cbSelected.setOnClickListener(v -> {
+            String mealType = getCurrentMealType(); // Obtener el tipo de comida actual
+
+            if (holder.cbSelected.isChecked()) {
+                if (selectedRecipeId != null && !selectedRecipeId.equals(recipe.getId())) {
+                    holder.cbSelected.setChecked(false);
+                    Toast.makeText(context,
+                            "Ya tienes una receta seleccionada para " + mealType + ". Deselecciónala primero.",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                new androidx.appcompat.app.AlertDialog.Builder(context)
+                        .setTitle("Seleccionar Receta")
+                        .setMessage("¿Deseas seleccionar " + recipe.getName() + "?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            selectedRecipeId = recipe.getId();
+                            updateUserMealSelection(recipe);
+                            updateUserCalories(recipe.getCalories(), recipe.getId());
+                            notifyDataSetChanged();
+                        })
+                        .setNegativeButton("No", (dialog, which) -> {
+                            holder.cbSelected.setChecked(false);
+                        })
+                        .show();
+            } else {
+                new androidx.appcompat.app.AlertDialog.Builder(context)
+                        .setTitle("Deseleccionar receta")
+                        .setMessage("¿Estás seguro que deseas deseleccionar\n" + recipe.getName() + "?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            removeUserMealSelection();
+                            updateUserCalories(-recipe.getCalories(), recipe.getId());
+                            selectedRecipeId = null;
+                            notifyDataSetChanged();
+                        })
+                        .setNegativeButton("No", (dialog, which) -> {
+                            holder.cbSelected.setChecked(true);
+                        })
+                        .show();
+            }
+        });
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -93,7 +145,8 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
         ImageView ivReceta;
         TextView tvNombreReceta;
         TextView tvCalorias;
-        TextView tvCompatibility;  // Añadir al layout
+        TextView tvCompatibility;
+        CheckBox cbSelected;
 
         RecetaViewHolder(View itemView) {
             super(itemView);
@@ -101,6 +154,7 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
             tvNombreReceta = itemView.findViewById(R.id.tvNombreReceta);
             tvCalorias = itemView.findViewById(R.id.tvCalorias);
             tvCompatibility = itemView.findViewById(R.id.tvCompatibility);
+            cbSelected = itemView.findViewById(R.id.cbSelected);
         }
     }
 
@@ -125,18 +179,16 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
 
     private void checkExistingSelection() {
         if (userId == null) return;
+        String mealType = getCurrentMealType();
 
         db.collection("usuarios").document(userId)
                 .collection("meals")
-                .document(currentMealType.toLowerCase())
+                .document(mealType.toLowerCase())
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String existingRecipeId = documentSnapshot.getString("recipeId");
-                        if (existingRecipeId != null && !existingRecipeId.equals(selectedRecipeId)) {
-                            selectedRecipeId = existingRecipeId;
-                            notifyDataSetChanged();
-                        }
+                        selectedRecipeId = documentSnapshot.getString("recipeId");
+                        notifyDataSetChanged();
                     }
                 });
     }
@@ -314,5 +366,15 @@ public class RecetasAdapter extends RecyclerView.Adapter<RecetasAdapter.RecetaVi
     public void setUserId(String userId) {
         this.userId = userId;
         Log.d(TAG, "UserId actualizado: " + userId);
+    }
+
+    private String getCurrentMealType() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        if (hour >= 6 && hour < 11) return "Desayuno";
+        if (hour >= 11 && hour < 15) return "Comida";
+        if (hour >= 15 && hour < 18) return "Merienda";
+        return "Cena";
     }
 }

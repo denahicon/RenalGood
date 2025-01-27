@@ -1,6 +1,5 @@
 package com.example.renalgood.agendarcitap;
 
-import static com.example.renalgood.agendarcitap.AppointmentValidations.cleanupExpiredAppointments;
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
 import android.os.Handler;
@@ -42,21 +41,24 @@ public class AppointmentCleanupService {
                                 citaCalendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(horaParts[0]));
                                 citaCalendar.set(Calendar.MINUTE, Integer.parseInt(horaParts[1]));
 
-                                if (citaCalendar.before(currentTime)) {
-                                    Log.d(TAG, "Eliminando cita pasada: " + document.getId());
+                                // Si es una cita pendiente y ya pasó la hora programada
+                                if (estado.equals("pendiente") && citaCalendar.before(currentTime)) {
+                                    String pacienteId = document.getString("pacienteId");
+                                    String nutriologoId = document.getString("nutriologoId");
+
+                                    // Eliminar la cita
                                     document.getReference().delete()
                                             .addOnSuccessListener(aVoid -> {
-                                                Log.d(TAG, "Cita pasada eliminada: " + document.getId());
-                                                // Notificar al nutriólogo y al paciente si es necesario
-                                                String pacienteId = document.getString("pacienteId");
-                                                String nutriologoId = document.getString("nutriologoId");
+                                                // Notificar a ambos usuarios
                                                 if (pacienteId != null && nutriologoId != null) {
-                                                    notificarCitaEliminada(pacienteId, nutriologoId,
+                                                    notificarCitaExpirada(pacienteId, nutriologoId,
                                                             citaTimestamp.toDate(), hora);
                                                 }
-                                            })
-                                            .addOnFailureListener(e ->
-                                                    Log.e(TAG, "Error al eliminar cita pasada", e));
+                                            });
+                                }
+                                // Si es una cita confirmada y ya pasó
+                                else if (estado.equals("confirmada") && citaCalendar.before(currentTime)) {
+                                    document.getReference().delete();
                                 }
                             } catch (Exception e) {
                                 Log.e(TAG, "Error procesando hora de cita", e);
@@ -67,8 +69,8 @@ public class AppointmentCleanupService {
                 .addOnFailureListener(e -> Log.e(TAG, "Error en limpieza de citas", e));
     }
 
-    private static void notificarCitaEliminada(String pacienteId, String nutriologoId,
-                                               Date fecha, String hora) {
+    private static void notificarCitaExpirada(String pacienteId, String nutriologoId,
+                                              Date fecha, String hora) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         String fechaStr = dateFormat.format(fecha);
 
@@ -78,7 +80,8 @@ public class AppointmentCleanupService {
                 "patients",
                 "appointment_expired",
                 "Cita Finalizada",
-                "Tu cita del " + fechaStr + " a las " + hora + " ha sido eliminada del sistema",
+                "Tu cita del " + fechaStr + " a las " + hora +
+                        " ha expirado porque el nutriólogo no respondió a tiempo",
                 ""
         );
 
@@ -87,8 +90,9 @@ public class AppointmentCleanupService {
                 nutriologoId,
                 "nutriologos",
                 "appointment_expired",
-                "Cita Finalizada",
-                "La cita del " + fechaStr + " a las " + hora + " ha sido eliminada del sistema",
+                "Cita Expirada",
+                "La cita del " + fechaStr + " a las " + hora +
+                        " ha expirado porque no fue atendida a tiempo",
                 ""
         );
     }
@@ -98,7 +102,7 @@ public class AppointmentCleanupService {
         Runnable cleanupTask = new Runnable() {
             @Override
             public void run() {
-                cleanupExpiredAppointments(db);
+                cleanupPastAppointments(db);
                 handler.postDelayed(this, 15 * 60 * 1000); // Cada 15 minutos
             }
         };

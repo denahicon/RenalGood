@@ -16,6 +16,7 @@ import com.example.renalgood.R;
 import com.example.renalgood.agendarcitap.CalendarioActivity;
 import com.example.renalgood.recetas.RecetasActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -46,6 +47,8 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
         Log.d("BuzonQuejas", "Iniciando setupNavigationListeners");
         setupNavigationListeners();
         Log.d("BuzonQuejas", "onCreate completado");
+
+        setupNotificationListener();
     }
 
     private void initializeViews() {
@@ -123,6 +126,29 @@ public class BuzonQuejasPaciente extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             finish();
         });
+    }
+
+    private void setupNotificationListener() {
+        if (auth.getCurrentUser() != null) {
+            db.collection("notificaciones")
+                    .whereEqualTo("userId", auth.getCurrentUser().getUid())
+                    .whereEqualTo("leida", false)
+                    .addSnapshotListener((snapshots, error) -> {
+                        if (error != null) {
+                            Log.e("BuzonQuejas", "Error escuchando notificaciones: " + error);
+                            return;
+                        }
+
+                        if (snapshots != null && !snapshots.isEmpty()) {
+                            DocumentSnapshot notification = snapshots.getDocuments().get(0);
+                            Toast.makeText(this, notification.getString("mensaje"),
+                                    Toast.LENGTH_LONG).show();
+
+                            // Marcar como leída
+                            notification.getReference().update("leida", true);
+                        }
+                    });
+        }
     }
 
     private boolean validarFormulario() {

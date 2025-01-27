@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
-import com.example.renalgood.agendarcitap.AppointmentValidations;
+import com.example.renalgood.agendarcitap.AppointmentTimeSlots;
 import com.example.renalgood.agendarcitap.NotificationService;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -153,7 +153,7 @@ public class CitasConfirmadasFragment extends Fragment implements CitasAdapter.C
         if (cita.getFecha() != null) {
             Timestamp citaTimestamp = new Timestamp(cita.getFecha());
 
-            if (AppointmentValidations.canCancelAppointment(citaTimestamp, cita.getHora())) {
+            if (AppointmentTimeSlots.canCancelAppointment(citaTimestamp, cita.getHora())) {
                 db.collection("citas")
                         .document(cita.getId())
                         .delete()

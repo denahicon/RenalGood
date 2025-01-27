@@ -8,7 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.renalgood.R;
-import com.example.renalgood.agendarcitap.AppointmentValidations;
+import com.example.renalgood.agendarcitap.AppointmentTimeSlots;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
@@ -85,7 +85,7 @@ public class CitasAdapter extends RecyclerView.Adapter<CitasAdapter.CitaViewHold
             boolean puedeSerCancelada = false;
             if (cita.getFecha() != null) {
                 Timestamp citaTimestamp = new Timestamp(cita.getFecha());
-                puedeSerCancelada = AppointmentValidations.canCancelAppointment(citaTimestamp, cita.getHora());
+                puedeSerCancelada = AppointmentTimeSlots.canCancelAppointment(citaTimestamp, cita.getHora());
             }
 
             if ("confirmada".equals(cita.getEstado()) && puedeSerCancelada) {
